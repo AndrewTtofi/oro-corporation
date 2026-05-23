@@ -1,0 +1,301 @@
+// ORO MVP — Postgres schema
+// Source of truth: §4 of prompt.md (data model) + §9.2 of the approved plan.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  prospect
+  client
+  staff
+  partner
+}
+
+enum Lang {
+  en
+  ru
+}
+
+enum ProspectStatus {
+  pending
+  approved
+  needs_info
+  rejected
+}
+
+enum DocType {
+  passport
+  proof_of_address
+  other
+}
+
+enum DocStatus {
+  received
+  under_review
+  approved
+  reupload_needed
+}
+
+enum ClientStatus {
+  active
+  on_hold
+  completed
+}
+
+enum SvcStatus {
+  pending
+  in_progress
+  completed
+}
+
+enum KeyDateStatus {
+  upcoming
+  overdue
+  completed
+}
+
+enum BookingStatus {
+  confirmed
+  completed
+  no_show
+  cancelled
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  fullName      String
+  phone         String?
+  role          Role
+  emailVerified DateTime?
+  languagePref  Lang      @default(en)
+  createdAt     DateTime  @default(now())
+
+  prospect          Prospect?
+  clientAccount     Client?
+  reviewedProspects Prospect[]      @relation("Reviewer")
+  primaryFor        Client[]        @relation("PrimaryStaff")
+  partnerServices   ClientService[] @relation("AssignedPartner")
+  internalNotes     InternalNote[]
+  messages          Message[]
+  expertBookings    Booking[]       @relation("Expert")
+  activity          ActivityLog[]
+  verificationTokens VerificationToken[]
+  passwordResets    PasswordReset[]
+  sessions          Session[]
+  accounts          Account[]
+
+  @@index([role])
+}
+
+model Prospect {
+  id               String         @id @default(uuid())
+  userId           String         @unique
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceNumber  String         @unique
+  status           ProspectStatus @default(pending)
+  servicesSelected Json
+  draft            Json?
+  createdAt        DateTime       @default(now())
+  reviewedAt       DateTime?
+  reviewedById     String?
+  reviewedBy       User?          @relation("Reviewer", fields: [reviewedById], references: [id])
+
+  details       ProspectDetail[]
+  documents     Document[]
+  bookings      Booking[]
+  messages      Message[]
+  internalNotes InternalNote[]
+  client        Client?
+
+  @@index([status])
+  @@index([referenceNumber])
+}
+
+model ProspectDetail {
+  id         String   @id @default(uuid())
+  prospectId String
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  fieldName  String
+  fieldValue String
+
+  @@index([prospectId, fieldName])
+}
+
+model Document {
+  id           String    @id @default(uuid())
+  prospectId   String
+  prospect     Prospect  @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  type         DocType
+  storageKey   String
+  encMeta      Json
+  originalName String
+  mime         String
+  sizeBytes    Int
+  status       DocStatus @default(received)
+  uploadedAt   DateTime  @default(now())
+
+  @@index([prospectId])
+}
+
+model Client {
+  id             String       @id @default(uuid())
+  userId         String       @unique
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prospectId     String       @unique
+  prospect       Prospect     @relation(fields: [prospectId], references: [id])
+  companyName    String?
+  status         ClientStatus @default(active)
+  primaryStaffId String
+  primaryStaff   User         @relation("PrimaryStaff", fields: [primaryStaffId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  services      ClientService[]
+  keyDates      KeyDate[]
+  messages      Message[]
+  internalNotes InternalNote[]
+}
+
+model ClientService {
+  id                String    @id @default(uuid())
+  clientId          String
+  client            Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  serviceType       String
+  status            SvcStatus @default(pending)
+  assignedPartnerId String?
+  assignedPartner   User?     @relation("AssignedPartner", fields: [assignedPartnerId], references: [id])
+  startDate         DateTime?
+  notes             String?
+
+  @@index([clientId])
+}
+
+model KeyDate {
+  id          String        @id @default(uuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  description String
+  dueDate     DateTime
+  status      KeyDateStatus @default(upcoming)
+
+  @@index([clientId, dueDate])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  prospectId  String?
+  clientId    String?
+  senderId    String
+  body        String
+  attachments Json?
+  createdAt   DateTime @default(now())
+
+  prospect Prospect? @relation(fields: [prospectId], references: [id])
+  client   Client?   @relation(fields: [clientId], references: [id])
+  sender   User      @relation(fields: [senderId], references: [id])
+
+  @@index([prospectId, createdAt])
+  @@index([clientId, createdAt])
+}
+
+model InternalNote {
+  id         String   @id @default(uuid())
+  prospectId String?
+  clientId   String?
+  authorId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  prospect Prospect? @relation(fields: [prospectId], references: [id])
+  client   Client?   @relation(fields: [clientId], references: [id])
+  author   User      @relation(fields: [authorId], references: [id])
+
+  @@index([prospectId, createdAt])
+  @@index([clientId, createdAt])
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  prospectId      String
+  prospect        Prospect      @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  expertId        String
+  expert          User          @relation("Expert", fields: [expertId], references: [id])
+  startsAt        DateTime
+  timezone        String
+  durationMinutes Int           @default(45)
+  status          BookingStatus @default(confirmed)
+  reminderSent24h Boolean       @default(false)
+  reminderSent1h  Boolean       @default(false)
+
+  @@index([startsAt])
+  @@index([expertId, startsAt])
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
+
+// --- Auth.js token storage (kept in DB even with JWT sessions) -----------
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id      String   @id @default(uuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token   String   @unique
+  expires DateTime
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id      String   @id @default(uuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token   String   @unique
+  expires DateTime
+  usedAt  DateTime?
+
+  @@index([userId])
+}

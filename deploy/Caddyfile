@@ -1,0 +1,41 @@
+# ORO Caddy reverse proxy. Auto-HTTPS via Let's Encrypt when ORO_DOMAIN is set
+# to a real hostname (DNS A record pointing at this box). For local dev the
+# override compose sets ORO_DOMAIN=localhost and Caddy serves plain HTTP.
+
+{
+	email admin@{$ORO_DOMAIN}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$ORO_DOMAIN} {
+	encode zstd gzip
+
+	# Security headers (HSTS is also set by Next.js; this is belt + suspenders)
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Hard-cap inbound body — defense in depth around the 10MB doc upload
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy web:3000 {
+		health_uri /api/health
+		health_interval 30s
+		health_timeout 5s
+		flush_interval -1
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
