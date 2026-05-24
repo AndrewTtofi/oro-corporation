@@ -21,9 +21,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund --legacy-peer-deps
       - run: npx prisma generate
       - run: npx prisma validate
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       - run: npm run lint
       - run: npm run typecheck
 

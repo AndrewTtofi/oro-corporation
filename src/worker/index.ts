@@ -1,6 +1,9 @@
 import cron from "node-cron";
 import { PrismaClient, KeyDateStatus, BookingStatus } from "@prisma/client";
 import { notify } from "@/lib/providers/notify";
+import { autoRescreenTick } from "./jobs/auto-rescreen";
+import { periodicReviewTick } from "./jobs/periodic-review";
+import { backfillCompliance } from "./jobs/backfill-compliance";
 
 /**
  * ORO reminders worker.
@@ -79,6 +82,16 @@ async function flipOverdueKeyDates() {
 function start() {
   // eslint-disable-next-line no-console
   console.log("[worker] starting reminders + key_date scheduler");
+
+  backfillCompliance().catch((e) => console.error("[backfill-compliance] failed:", e));
+
+  cron.schedule("0 * * * *", () => {
+    autoRescreenTick().catch((e) => console.error("[auto-rescreen] tick failed:", e));
+  });
+  cron.schedule("0 6 * * *", () => {
+    periodicReviewTick().catch((e) => console.error("[periodic-review] tick failed:", e));
+  });
+
   cron.schedule("*/15 * * * *", () => { void tick24h().catch((e) => console.error("[worker] 24h:", e)); });
   cron.schedule("*/5 * * * *",  () => { void tick1h().catch((e) => console.error("[worker] 1h:", e)); });
   cron.schedule("0 2 * * *",    () => { void flipOverdueKeyDates().catch((e) => console.error("[worker] keydates:", e)); });

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
 
-type AdminTab = "submissions" | "bookings" | "clients" | "analytics" | "content" | "settings";
+type AdminTab = "submissions" | "bookings" | "clients" | "users" | "compliance" | "analytics" | "content" | "settings";
 
 export function AdminShell({
   children,
@@ -22,6 +22,8 @@ export function AdminShell({
           <NavLink href="/admin/submissions" label="Submissions" active={active === "submissions"} />
           <NavLink href="/admin/bookings" label="Bookings" active={active === "bookings"} />
           <NavLink href="/admin/clients" label="Clients" active={active === "clients"} />
+          <NavLink href="/admin/users" label="Users" active={active === "users"} />
+          <NavLink href="/admin/compliance/tasks" label="Compliance" active={active === "compliance"} />
           <NavLink href="/admin/analytics" label="Analytics" active={active === "analytics"} />
           <NavLink href="/admin/content" label="Content" active={active === "content"} />
         </nav>

@@ -9,9 +9,8 @@ out/
 dist-worker/
 build/
 
-# Runtime data
-data/
-docs/
+# Runtime data (anchored — don't catch nested data/ dirs like src/lib/services/compliance/data/)
+/data/
 *.local
 
 # Env

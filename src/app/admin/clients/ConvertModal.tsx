@@ -2,7 +2,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-interface Candidate { prospectId: string; referenceNumber: string; name: string; services: string[] }
+interface Candidate {
+  prospectId: string;
+  referenceNumber: string;
+  name: string;
+  services: string[];
+  compliance: "open" | "in_review" | "cleared" | "blocked";
+}
 
 export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
   const [open, setOpen] = useState(false);
@@ -20,7 +26,19 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(body.error ?? "Convert failed");
+        if (res.status === 409) {
+          const msg =
+            body.error === "compliance_blocked"
+              ? "Conversion blocked: compliance file is blocked. Resolve it before converting."
+              : body.error === "compliance_not_cleared"
+              ? "Conversion blocked: compliance review is not yet cleared."
+              : body.error === "no_compliance_file"
+              ? "Conversion blocked: no compliance file found for this prospect."
+              : body.error ?? "Conversion blocked by compliance gate.";
+          setError(msg);
+        } else {
+          setError(body.error ?? "Convert failed");
+        }
         return;
       }
       const out = (await res.json()) as { clientId: string };
@@ -55,19 +73,37 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
                   {candidates.map((c) => (
                     <li key={c.prospectId} className="flex items-center justify-between gap-3 p-3 rounded-inner border border-admin-border">
                       <div>
-                        <div className="text-meta font-semibold">{c.name}</div>
+                        <div className="text-meta font-semibold flex items-center gap-2">
+                          {c.name}
+                          {c.compliance === "cleared" ? (
+                            <span className="badge badge-approved">✓ Cleared</span>
+                          ) : c.compliance === "blocked" ? (
+                            <span className="badge badge-pending" style={{ color: "#DC2626" }}>✗ Blocked</span>
+                          ) : (
+                            <span className="badge badge-pending">⚠ In review</span>
+                          )}
+                        </div>
                         <div className="text-[12px] text-admin-muted">
                           Ref: <span className="font-mono">{c.referenceNumber}</span> · {c.services.map(pretty).join(", ")}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => convert(c.prospectId)}
-                        disabled={pending}
-                        className="btn btn-primary px-3 py-1.5 text-[12px] disabled:opacity-50"
-                      >
-                        Make Client
-                      </button>
+                      {c.compliance === "cleared" ? (
+                        <button
+                          type="button"
+                          onClick={() => convert(c.prospectId)}
+                          disabled={pending}
+                          className="btn btn-primary px-3 py-1.5 text-[12px] disabled:opacity-50"
+                        >
+                          Make Client
+                        </button>
+                      ) : (
+                        <a
+                          href={`/admin/submissions/${c.referenceNumber}/compliance`}
+                          className="text-meta underline"
+                        >
+                          Open compliance →
+                        </a>
+                      )}
                     </li>
                   ))}
                 </ul>

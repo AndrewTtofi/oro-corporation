@@ -18,10 +18,25 @@ export type ActivityAction =
   | "note.added"
   | "booking.created"
   | "booking.reminder_sent"
-  | "booking.cancelled";
+  | "booking.cancelled"
+  | "user.email_verified"
+  | "compliance.file_created"
+  | "compliance.party_added"
+  | "compliance.party_removed"
+  | "compliance.idv_verified"
+  | "compliance.idv_failed"
+  | "compliance.screening_run"
+  | "compliance.hit_reviewed"
+  | "compliance.risk_assessed"
+  | "compliance.risk_overridden"
+  | "compliance.signed_off"
+  | "compliance.blocked"
+  | "compliance.review_task_created"
+  | "compliance.review_task_completed";
 
 export async function logActivity(args: {
-  entityType: "prospect" | "client" | "document" | "booking";
+  entityType: "prospect" | "client" | "document" | "booking" | "user"
+    | "compliance_file" | "party" | "kyc_case" | "screening_run" | "review_task";
   entityId: string;
   action: ActivityAction;
   actorId?: string;

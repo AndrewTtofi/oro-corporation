@@ -26,12 +26,18 @@ const schema = z.object({
 
   // Email
   EMAIL_DRIVER: z.enum(["smtp", "resend", "console"]).default("smtp"),
+
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
   RESEND_API_KEY: z.string().optional(),
+
+  // Compliance screening
+  SCREENING_DRIVER: z.enum(["opensanctions"]).default("opensanctions"),
+  SCREENING_MATCH_THRESHOLD: z.coerce.number().min(0).max(1).default(0.7),
+  OPENSANCTIONS_API_KEY: z.string().optional(),
 
   // OAuth (gated — off by default per project owner)
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -55,6 +61,19 @@ let cached: Env | undefined;
 
 export function env(): Env {
   if (cached) return cached;
+  // next build's "Collecting page data" phase imports every route to compute
+  // static metadata. Routes pull in features/env at module scope, so without
+  // this guard the build would require real runtime secrets. Validation still
+  // runs at every actual server boot (NEXT_PHASE is unset there).
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return schema.parse({
+      DATABASE_URL: "postgresql://build:build@localhost:5432/build",
+      AUTH_SECRET: "x".repeat(32),
+      APP_URL: "http://localhost",
+      ENCRYPTION_KEY_B64: "x".repeat(44),
+      NODE_ENV: "production",
+    });
+  }
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors;

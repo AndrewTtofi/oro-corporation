@@ -67,6 +67,79 @@ enum BookingStatus {
   cancelled
 }
 
+enum ComplianceStatus {
+  open
+  in_review
+  cleared
+  blocked
+}
+
+enum RiskRating {
+  low
+  standard
+  high
+}
+
+enum PartyType {
+  individual
+  entity
+}
+
+enum PartyRole {
+  main_contact
+  ubo
+  director
+  shareholder
+  signatory
+  intermediary
+}
+
+enum KycCheckStatus {
+  pending
+  verified
+  failed
+}
+
+enum KycCaseState {
+  pending
+  in_progress
+  passed
+  blocked
+}
+
+enum ScreeningOutcome {
+  clear
+  hits
+  error
+}
+
+enum HitReviewStatus {
+  unreviewed
+  false_positive
+  confirmed_match
+  escalated
+}
+
+enum ReviewTaskKind {
+  periodic_review
+  screening_hit
+  id_doc_review
+  risk_assessment
+}
+
+enum ReviewTaskState {
+  open
+  completed
+  dismissed
+}
+
+enum DocPurpose {
+  passport
+  proof_of_address
+  sof
+  other
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -77,6 +150,7 @@ model User {
   emailVerified DateTime?
   languagePref  Lang      @default(en)
   createdAt     DateTime  @default(now())
+  deactivatedAt DateTime?
 
   prospect          Prospect?
   clientAccount     Client?
@@ -91,6 +165,14 @@ model User {
   passwordResets    PasswordReset[]
   sessions          Session[]
   accounts          Account[]
+
+  // Compliance back-relations
+  complianceSignOffs   ComplianceFile[] @relation("ComplianceSigner")
+  riskAssessments      ComplianceFile[] @relation("RiskAssessor")
+  idvReviews           KycCase[]        @relation("IdvReviewer")
+  screeningRuns        ScreeningRun[]   @relation("ScreeningRunner")
+  hitReviews           ScreeningHit[]   @relation("HitReviewer")
+  reviewTaskAssignments ReviewTask[]    @relation("ReviewAssignee")
 
   @@index([role])
 }
@@ -108,12 +190,13 @@ model Prospect {
   reviewedById     String?
   reviewedBy       User?          @relation("Reviewer", fields: [reviewedById], references: [id])
 
-  details       ProspectDetail[]
-  documents     Document[]
-  bookings      Booking[]
-  messages      Message[]
-  internalNotes InternalNote[]
-  client        Client?
+  details        ProspectDetail[]
+  documents      Document[]
+  bookings       Booking[]
+  messages       Message[]
+  internalNotes  InternalNote[]
+  client         Client?
+  complianceFile ComplianceFile?
 
   @@index([status])
   @@index([referenceNumber])
@@ -141,8 +224,12 @@ model Document {
   sizeBytes    Int
   status       DocStatus @default(received)
   uploadedAt   DateTime  @default(now())
+  partyId      String?
+  party        Party?    @relation(fields: [partyId], references: [id])
+  purpose      DocPurpose @default(other)
 
   @@index([prospectId])
+  @@index([partyId])
 }
 
 model Client {
@@ -157,10 +244,11 @@ model Client {
   primaryStaff   User         @relation("PrimaryStaff", fields: [primaryStaffId], references: [id])
   createdAt      DateTime     @default(now())
 
-  services      ClientService[]
-  keyDates      KeyDate[]
-  messages      Message[]
-  internalNotes InternalNote[]
+  services       ClientService[]
+  keyDates       KeyDate[]
+  messages       Message[]
+  internalNotes  InternalNote[]
+  complianceFile ComplianceFile?
 }
 
 model ClientService {
@@ -298,4 +386,180 @@ model PasswordReset {
   usedAt  DateTime?
 
   @@index([userId])
+}
+
+model OrgSettings {
+  id           String   @id @default("singleton")
+  displayName  String   @default("ORO Corporate Services")
+  contactEmail String?
+  address      String?
+  updatedAt    DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  label       String
+  description String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FeatureFlag {
+  key       String   @id
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+// --- Compliance (KYC/AML) -----------------------------------------------
+
+model ComplianceFile {
+  id                  String   @id @default(uuid())
+  prospectId          String?  @unique
+  prospect            Prospect? @relation(fields: [prospectId], references: [id])
+  clientId            String?  @unique
+  client              Client?  @relation(fields: [clientId], references: [id])
+
+  status              ComplianceStatus @default(open)
+
+  signedOffById       String?
+  signedOff           User?    @relation("ComplianceSigner", fields: [signedOffById], references: [id])
+  signedOffAt         DateTime?
+  signedOffNote       String?
+
+  riskComputed        RiskRating?
+  riskComputedScore   Int?
+  riskRating          RiskRating?
+  riskOverrideReason  String?
+  riskAssessedAt      DateTime?
+  riskAssessedById    String?
+  riskAssessedBy      User?    @relation("RiskAssessor", fields: [riskAssessedById], references: [id])
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  parties             Party[]
+  reviewTasks         ReviewTask[]
+
+  @@index([status])
+}
+
+model Party {
+  id                  String   @id @default(uuid())
+  complianceFileId    String
+  complianceFile      ComplianceFile @relation(fields: [complianceFileId], references: [id], onDelete: Cascade)
+
+  type                PartyType
+  role                PartyRole
+  fullName            String
+  dateOfBirth         DateTime?
+  nationality         String?
+  countryOfResidence  String?
+  passportNumber      String?
+  registrationNumber  String?
+  jurisdiction        String?
+  ownershipPct        Decimal? @db.Decimal(5, 2)
+  isPep               Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  kycCase             KycCase?
+  documents           Document[]
+
+  @@index([complianceFileId])
+}
+
+model KycCase {
+  id                    String   @id @default(uuid())
+  partyId               String   @unique
+  party                 Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  idvStatus             KycCheckStatus @default(pending)
+  idvReviewedById       String?
+  idvReviewedBy         User?    @relation("IdvReviewer", fields: [idvReviewedById], references: [id])
+  idvReviewedAt         DateTime?
+  idvNote               String?
+
+  passportDocId         String?
+  proofOfAddressDocId   String?
+  sofDocId              String?
+  sofNote               String?
+
+  latestScreeningRunId  String? @unique
+  latestScreeningRun    ScreeningRun? @relation("LatestScreening", fields: [latestScreeningRunId], references: [id])
+
+  state                 KycCaseState @default(pending)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  screeningRuns         ScreeningRun[]  @relation("CaseRuns")
+
+  @@index([state])
+}
+
+model ScreeningRun {
+  id              String   @id @default(uuid())
+  kycCaseId       String
+  kycCase         KycCase  @relation("CaseRuns", fields: [kycCaseId], references: [id], onDelete: Cascade)
+
+  provider        String
+  query           Json
+  ranAt           DateTime @default(now())
+  ranByActorId    String?
+  ranByActor      User?    @relation("ScreeningRunner", fields: [ranByActorId], references: [id])
+  outcome         ScreeningOutcome
+  hitCount        Int      @default(0)
+  rawResponse     Json?
+  errorMessage    String?
+
+  hits            ScreeningHit[]
+  latestForCase   KycCase?  @relation("LatestScreening")
+
+  @@index([kycCaseId, ranAt])
+}
+
+model ScreeningHit {
+  id              String   @id @default(uuid())
+  screeningRunId  String
+  screeningRun    ScreeningRun @relation(fields: [screeningRunId], references: [id], onDelete: Cascade)
+
+  externalId      String
+  matchedName     String
+  matchedSchema   String
+  matchedTopics   String[]
+  matchScore      Float
+  matchedListings Json
+  matchUrl        String?
+
+  reviewStatus    HitReviewStatus @default(unreviewed)
+  reviewedById    String?
+  reviewedBy      User?    @relation("HitReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?
+  reviewNote      String?
+
+  @@index([screeningRunId])
+  @@index([externalId])
+}
+
+model ReviewTask {
+  id                String   @id @default(uuid())
+  complianceFileId  String
+  complianceFile    ComplianceFile @relation(fields: [complianceFileId], references: [id], onDelete: Cascade)
+
+  kind              ReviewTaskKind
+  dueAt             DateTime?
+  state             ReviewTaskState @default(open)
+  assignedToId      String?
+  assignedTo        User?    @relation("ReviewAssignee", fields: [assignedToId], references: [id])
+  note              String?
+  completedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+
+  @@index([complianceFileId, state])
+  @@index([assignedToId, state])
 }

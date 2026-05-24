@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { allocateReferenceNumber } from "./reference";
 import { logActivity } from "./activity";
+import { createComplianceFileForProspect } from "@/lib/services/compliance/files";
 import { ProspectStatus, type Prisma } from "@prisma/client";
 import { submitSchema, type SubmitInput, type FullDraft, refineForSubmit, SERVICE_KEYS } from "@/lib/schema/onboarding";
 
@@ -116,5 +117,6 @@ export async function submitProspect(userId: string) {
     actorId: userId,
     meta: { reference: updated.referenceNumber },
   });
+  await createComplianceFileForProspect(updated.id, userId);
   return { ok: true as const, prospect: updated };
 }

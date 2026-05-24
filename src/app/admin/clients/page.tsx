@@ -3,6 +3,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { prisma } from "@/lib/db";
 import { ClientStatus, ProspectStatus } from "@prisma/client";
 import { ConvertModal } from "./ConvertModal";
+import { FilterSelect } from "./FilterSelect";
 
 export const metadata = { title: "Clients" };
 
@@ -43,7 +44,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
   const partners = await prisma.user.findMany({ where: { role: "partner" }, select: { id: true, fullName: true } });
   const approvedProspects = await prisma.prospect.findMany({
     where: { status: ProspectStatus.approved, client: null },
-    include: { user: true },
+    include: { user: true, complianceFile: { select: { status: true } } },
     orderBy: { reviewedAt: "desc" },
   });
 
@@ -64,6 +65,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
           referenceNumber: p.referenceNumber,
           name: p.user.fullName,
           services: (Array.isArray(p.servicesSelected) ? (p.servicesSelected as string[]) : []),
+          compliance: p.complianceFile?.status ?? "open",
         }))} />
       </div>
 
@@ -145,21 +147,6 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
         </div>
       </div>
     </AdminShell>
-  );
-}
-
-function FilterSelect({
-  name, label, current, options,
-}: { name: string; label: string; current: string; options: { value: string; label: string }[] }) {
-  return (
-    <form method="GET" className="flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase text-admin-muted tracking-widest">{label}</span>
-      <select name={name} defaultValue={current} className="px-3 py-1.5 rounded-inner text-[13px] min-w-[140px] bg-admin-surface"
-              style={{ border: "1px solid var(--border)" }}
-              onChange={(e) => (e.currentTarget.form ?? new HTMLFormElement()).submit()}>
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </form>
   );
 }
 
