@@ -6,6 +6,18 @@
 
 A custom-built replacement for a failed 70-page no-code attempt at a client-onboarding portal. Prospects submit info and documents *before* they can book a free consultation; staff review, approve, and convert approved prospects to active clients post-call.
 
+## 📖 Documentation
+
+The full reference lives in [**`docs/wiki/`**](./docs/wiki/) — 18 chapters covering architecture, data model, every admin tab, the client portal, the partner workspace, the worker jobs, the API surface, testing, deployment, and troubleshooting. Start with [`docs/wiki/README.md`](./docs/wiki/README.md) or jump directly to:
+
+- [System overview & architecture](./docs/wiki/01-overview.md)
+- [Getting started (local dev)](./docs/wiki/02-getting-started.md)
+- [Data model](./docs/wiki/04-data-model.md)
+- [Admin panel — every tab](./docs/wiki/11-admin-panel.md)
+- [Compliance / KYC / AML](./docs/wiki/06-compliance.md)
+
+The same content is also published to the [**GitHub Wiki**](https://github.com/AndrewTtofi/oro-corporation/wiki) for sidebar-style browsing.
+
 ## Architecture
 
 ```
