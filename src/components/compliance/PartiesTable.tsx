@@ -10,7 +10,7 @@ export function PartiesTable({ fileId, parties, parentLink }: {
       <table className="w-full">
         <thead>
           <tr style={{ background: "#FDFDFD" }}>
-            <Th>Party</Th><Th>Role</Th><Th>Type</Th><Th>KYC state</Th><Th>Latest screening</Th><Th></Th>
+            <Th>Party</Th><Th>Role</Th><Th>Type</Th><Th>KYC state</Th><Th>Latest screening</Th><Th>{""}</Th>
           </tr>
         </thead>
         <tbody>

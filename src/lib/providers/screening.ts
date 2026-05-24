@@ -41,7 +41,6 @@ export function screening(): ScreeningProvider {
   switch (driver) {
     case "opensanctions": {
       // Lazy import so tests can mock without pulling network code.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { OpenSanctionsProvider } = require("./screening.opensanctions");
       cached = new OpenSanctionsProvider({
         apiKey: env().OPENSANCTIONS_API_KEY,

@@ -32,7 +32,7 @@ export async function runScreening(kycCaseId: string, opts: { actorId: string | 
       ranByActorId: opts.actorId,
       outcome: result.outcome,
       hitCount: result.hits.length,
-      rawResponse: (result.raw ?? null) as object | null,
+      rawResponse: result.raw ? (result.raw as object) : undefined,
       errorMessage: result.errorMessage ?? null,
     },
   });

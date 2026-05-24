@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeRisk, type RiskInput } from "../risk";
+import { computeRisk, type RiskInput, type PartyInput } from "../risk";
 
 function makeInput(overrides: Partial<RiskInput> = {}): RiskInput {
   return {
@@ -63,10 +63,13 @@ describe("computeRisk", () => {
   });
 
   it("nominees + many parties push complexity", () => {
-    const parties = Array.from({ length: 6 }, () => ({
-      role: "ubo" as const, isPep: false, nationality: "CY", countryOfResidence: "CY", jurisdiction: null,
+    const ubos: PartyInput[] = Array.from({ length: 6 }, () => ({
+      role: "ubo", isPep: false, nationality: "CY", countryOfResidence: "CY", jurisdiction: null,
     }));
-    parties.unshift({ role: "main_contact", isPep: false, nationality: "CY", countryOfResidence: "CY", jurisdiction: null });
+    const parties: PartyInput[] = [
+      { role: "main_contact", isPep: false, nationality: "CY", countryOfResidence: "CY", jurisdiction: null },
+      ...ubos,
+    ];
     const r = computeRisk(makeInput({ parties, hasNominees: true, entityLayers: 3 }));
     expect(r.factors.complexity).toBe(3);
   });

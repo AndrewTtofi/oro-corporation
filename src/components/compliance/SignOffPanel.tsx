@@ -41,7 +41,7 @@ export function SignOffPanel({ fileId, status, riskRating, signedOffAt, signedOf
       {status === "cleared" ? (
         <div className="text-meta">
           ✓ Cleared {signedOffAt && <span className="text-admin-muted">on {new Date(signedOffAt).toLocaleString()}</span>}
-          {signedOffNote && <p className="mt-2 italic text-admin-muted">"{signedOffNote}"</p>}
+          {signedOffNote && <p className="mt-2 italic text-admin-muted">&ldquo;{signedOffNote}&rdquo;</p>}
         </div>
       ) : (
         <>

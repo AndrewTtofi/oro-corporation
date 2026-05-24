@@ -38,7 +38,7 @@ class LocalEncryptedStorage implements StorageProvider {
 
   private fullPath(key: string) {
     // key is the storage-layer identifier; never user-supplied path
-    if (!/^[a-z0-9/_-]+$/i.test(key)) throw new Error("Invalid storage key");
+    if (!/^[a-z0-9/_.-]+$/i.test(key) || key.includes("..")) throw new Error("Invalid storage key");
     return path.join(this.rootDir, key);
   }
 
@@ -85,7 +85,6 @@ export function storage(): StorageProvider {
   let next: StorageProvider;
   if (e.STORAGE_DRIVER === "s3") {
     // Lazy-load S3 adapter so local boots don't pay the SDK cost
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { S3EncryptedStorage } = require("./storage.s3") as typeof import("./storage.s3");
     next = new S3EncryptedStorage();
   } else {
