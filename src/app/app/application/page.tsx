@@ -14,11 +14,17 @@ export default async function MyApplicationPage() {
   });
   if (!prospect) redirect("/onboarding");
   const isApproved = prospect.status === "approved";
+  const client = await prisma.client.findUnique({ where: { userId: user.id }, select: { id: true } });
 
   const map = Object.fromEntries(prospect.details.map((d) => [d.fieldName, d.fieldValue]));
 
   return (
     <ClientShell active="application" approved={isApproved}>
+      {client && (
+        <div className="mb-6 p-3 rounded-elem bg-[var(--client-bg)] text-meta text-muted">
+          This is your original submission. For your current service status, see your <Link href="/app/dashboard" className="underline">Dashboard</Link>.
+        </div>
+      )}
       <div className="flex justify-between items-end mb-10 flex-wrap gap-4">
         <div>
           <p className="eyebrow mb-2">Application</p>
