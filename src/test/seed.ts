@@ -119,3 +119,25 @@ export async function createClientService(
     },
   });
 }
+
+export async function createDocumentRequest(
+  tx: PrismaClient,
+  opts: {
+    clientId: string;
+    requestedById?: string;
+    description?: string;
+    serviceTypeKey?: string | null;
+    state?: "open" | "fulfilled" | "cancelled";
+  },
+) {
+  const requestedById = opts.requestedById ?? (await createUser(tx, { role: "staff" })).id;
+  return tx.documentRequest.create({
+    data: {
+      clientId: opts.clientId,
+      requestedById,
+      description: opts.description ?? "Please upload the requested document",
+      serviceTypeKey: opts.serviceTypeKey ?? null,
+      state: opts.state ?? "open",
+    },
+  });
+}

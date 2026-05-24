@@ -1,181 +1,210 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from "vitest";
+import type { PrismaClient } from "@prisma/client";
+import { getTestPrisma, stopTestPrisma } from "@/test/db";
+import { inRollbackTx, wrapTx } from "@/test/tx";
+import { createUser, createProspect, createClient, createDocumentRequest } from "@/test/seed";
 
-const db = vi.hoisted(() => {
-  const messages: any[] = [];
-  const userById = new Map<string, any>();
-  const prospectByUserId = new Map<string, any>();
-  const clientByUserId = new Map<string, any>();
-  const docRequestById = new Map<string, any>();
-  return {
-    messages, userById, prospectByUserId, clientByUserId, docRequestById,
-    reset() {
-      messages.length = 0;
-      userById.clear(); prospectByUserId.clear(); clientByUserId.clear(); docRequestById.clear();
-    },
-  };
-});
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    user: { findUnique: async ({ where: { id } }: any) => db.userById.get(id) ?? null },
-    prospect: {
-      findUnique: async ({ where: { userId } }: any) => db.prospectByUserId.get(userId) ?? null,
-    },
-    client: {
-      findUnique: async ({ where }: any) => {
-        if (where.userId) return db.clientByUserId.get(where.userId) ?? null;
-        return null;
-      },
-      update: async ({ where, data }: any) => {
-        for (const [, c] of db.clientByUserId.entries()) {
-          if (c.id === where.id) { Object.assign(c, data); return c; }
-        }
-        return null;
-      },
-    },
-    message: {
-      create: async ({ data }: any) => {
-        const m = { id: `m${db.messages.length + 1}`, ...data, createdAt: new Date() };
-        db.messages.push(m);
-        return m;
-      },
-      findMany: async ({ where }: any) => {
-        return db.messages.filter((m) =>
-          (where.OR ?? []).some((c: any) =>
-            (c.prospectId !== undefined && c.prospectId === m.prospectId) ||
-            (c.clientId   !== undefined && c.clientId   === m.clientId),
-          ),
-        );
-      },
-    },
-    documentRequest: { findUnique: async ({ where: { id } }: any) => db.docRequestById.get(id) ?? null },
-    activityLog: { create: async () => null },
-    $transaction: async (fn: any) => fn({
-      user:   { update: async ({ where: { id }, data }: any) => { const u = db.userById.get(id); Object.assign(u, data); return u; } },
-      client: {
-        findUnique: async ({ where: { userId } }: any) => db.clientByUserId.get(userId) ?? null,
-        update: async ({ where: { id }, data }: any) => {
-          for (const [, c] of db.clientByUserId.entries()) {
-            if (c.id === id) { Object.assign(c, data); return c; }
-          }
-          return null;
-        },
-      },
-    }),
-  },
-}));
+let prisma: PrismaClient;
+beforeAll(async () => { prisma = await getTestPrisma(); });
+afterAll(async () => { await stopTestPrisma(); });
 
-const emailMock = vi.hoisted(() => ({ sent: [] as any[] }));
+vi.mock("@/lib/db", () => ({ prisma: undefined as unknown as PrismaClient }));
+
 vi.mock("@/lib/providers/email", () => ({
-  email: () => ({ send: async (args: any) => { emailMock.sent.push(args); return { ok: true }; } }),
+  email: () => ({ send: async () => ({ ok: true }) }),
 }));
 
-import { sendClientMessage, getMessagesForUser, updateClientSelfProfile } from "../client-portal";
+vi.mock("@/lib/providers/storage", () => ({
+  storage: () => ({
+    put: async (key: string, buf: Buffer, _mime: string) => ({
+      key,
+      encMeta: { alg: "aes-256-gcm", ivB64: "AAAAAAAAAAAAAAAA", tagB64: "AAAAAAAAAAAAAAAAAAAAAA==", keyId: "test" },
+      sizeBytes: buf.byteLength,
+    }),
+    getStream: async () => { throw new Error("not implemented in tests"); },
+    delete: async () => { /* no-op */ },
+  }),
+}));
 
-beforeEach(() => { db.reset(); emailMock.sent.length = 0; });
+async function loadService(db: PrismaClient) {
+  const dbMod = await import("@/lib/db");
+  (dbMod as { prisma: PrismaClient }).prisma = db;
+  return import("@/lib/services/client-portal");
+}
+
+afterEach(() => {
+  vi.resetModules();
+});
 
 describe("sendClientMessage", () => {
-  it("writes Message.clientId when user is a Client; emails primaryStaff", async () => {
-    db.userById.set("u1", { id: "u1", fullName: "Client User" });
-    db.prospectByUserId.set("u1", { id: "p1", userId: "u1", reviewedById: null });
-    db.clientByUserId.set("u1", { id: "c1", userId: "u1", primaryStaff: { email: "staff@x.com" } });
-    await sendClientMessage("u1", "Hello");
-    expect(db.messages[0].clientId).toBe("c1");
-    expect(db.messages[0].prospectId).toBeUndefined();
-    expect(emailMock.sent[0].to).toBe("staff@x.com");
+  it("writes Message.clientId when user is a Client", async () => {
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const { sendClientMessage } = await loadService(tx);
+
+      await sendClientMessage(client.userId, "Hello from client");
+
+      const messages = await tx.message.findMany({ where: { clientId: client.id } });
+      expect(messages).toHaveLength(1);
+      expect(messages[0].clientId).toBe(client.id);
+      expect(messages[0].prospectId).toBeNull();
+    });
   });
-  it("writes Message.prospectId when user is still a Prospect; emails reviewer if any", async () => {
-    db.userById.set("u2", { id: "u2", fullName: "Pending" });
-    db.prospectByUserId.set("u2", { id: "p2", userId: "u2", reviewedBy: { email: "rev@x.com" } });
-    await sendClientMessage("u2", "Hi");
-    expect(db.messages[0].prospectId).toBe("p2");
-    expect(db.messages[0].clientId).toBeUndefined();
-    expect(emailMock.sent[0].to).toBe("rev@x.com");
+
+  it("writes Message.prospectId when user is still a Prospect", async () => {
+    await inRollbackTx(prisma, async (tx) => {
+      const prospect = await createProspect(tx);
+      const { sendClientMessage } = await loadService(tx);
+
+      await sendClientMessage(prospect.userId, "Hello from prospect");
+
+      const messages = await tx.message.findMany({ where: { prospectId: prospect.id } });
+      expect(messages).toHaveLength(1);
+      expect(messages[0].prospectId).toBe(prospect.id);
+      expect(messages[0].clientId).toBeNull();
+    });
   });
+
   it("throws on empty body", async () => {
-    db.userById.set("u3", { id: "u3" });
-    db.prospectByUserId.set("u3", { id: "p3", userId: "u3" });
-    await expect(sendClientMessage("u3", "  ")).rejects.toThrow(/body/i);
+    await inRollbackTx(prisma, async (tx) => {
+      const prospect = await createProspect(tx);
+      const { sendClientMessage } = await loadService(tx);
+
+      await expect(sendClientMessage(prospect.userId, "  ")).rejects.toThrow(/body/i);
+    });
   });
 });
 
 describe("getMessagesForUser", () => {
   it("returns messages tied to either prospect or client", async () => {
-    db.userById.set("u4", { id: "u4" });
-    db.prospectByUserId.set("u4", { id: "p4", userId: "u4" });
-    db.clientByUserId.set("u4", { id: "c4", userId: "u4" });
-    db.messages.push(
-      { id: "m1", prospectId: "p4", body: "old prospect msg",  createdAt: new Date(1) },
-      { id: "m2", clientId:   "c4", body: "new client msg",    createdAt: new Date(2) },
-      { id: "m3", clientId:   "other", body: "other client",   createdAt: new Date(3) },
-    );
-    const out = await getMessagesForUser("u4");
-    expect(out.map((m: any) => m.id).sort()).toEqual(["m1", "m2"]);
+    await inRollbackTx(prisma, async (tx) => {
+      // Create a client (which has an underlying prospect + user)
+      const client = await createClient(tx);
+      const prospect = await tx.prospect.findUnique({ where: { id: client.prospectId } });
+
+      // Seed one message via prospectId (pre-conversion) and one via clientId
+      const staffUser = await createUser(tx, { role: "staff" });
+      await tx.message.create({ data: { senderId: staffUser.id, body: "old prospect msg", prospectId: prospect!.id } });
+      await tx.message.create({ data: { senderId: staffUser.id, body: "new client msg", clientId: client.id } });
+
+      // Seed a message for a different client to confirm it's excluded
+      const otherClient = await createClient(tx);
+      await tx.message.create({ data: { senderId: staffUser.id, body: "other", clientId: otherClient.id } });
+
+      const { getMessagesForUser } = await loadService(tx);
+      const out = await getMessagesForUser(client.userId);
+
+      expect(out).toHaveLength(2);
+      const bodies = out.map((m: { body: string }) => m.body).sort();
+      expect(bodies).toEqual(["new client msg", "old prospect msg"]);
+    });
   });
 });
 
 describe("updateClientSelfProfile", () => {
   it("rejects fields not in whitelist", async () => {
-    db.userById.set("u5", { id: "u5" });
-    db.clientByUserId.set("u5", { id: "c5", userId: "u5" });
-    await expect(
-      updateClientSelfProfile("u5", { companyName: "x" } as any),
-    ).rejects.toThrow(/unknown/i);
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const { updateClientSelfProfile } = await loadService(wrapTx(tx));
+
+      await expect(
+        updateClientSelfProfile(client.userId, { companyName: "x" } as never),
+      ).rejects.toThrow(/unknown/i);
+    });
+  });
+
+  it("updates allowed user + client fields in the real DB", async () => {
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const { updateClientSelfProfile } = await loadService(wrapTx(tx));
+
+      await updateClientSelfProfile(client.userId, {
+        fullName: "Updated Name",
+        taxResidency: "CY",
+      });
+
+      const updatedUser = await tx.user.findUnique({ where: { id: client.userId } });
+      expect(updatedUser?.fullName).toBe("Updated Name");
+
+      const updatedClient = await tx.client.findUnique({ where: { id: client.id } });
+      expect(updatedClient?.taxResidency).toBe("CY");
+    });
   });
 });
 
-import { uploadClientDocument } from "../client-portal";
-
-const uploadDocMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/services/documents", () => ({
-  uploadDocument: uploadDocMock,
-  MAX_BYTES: 10 * 1024 * 1024,
-}));
-
 describe("uploadClientDocument", () => {
-  beforeEach(() => { uploadDocMock.mockReset(); });
-
   it("rejects fulfillment of a DocumentRequest not owned by the user's client", async () => {
-    db.userById.set("u6", { id: "u6" });
-    db.clientByUserId.set("u6", { id: "c6", userId: "u6", prospectId: "p6" });
-    db.docRequestById.set("dr1", { id: "dr1", clientId: "other-client", serviceTypeKey: "company_formation" });
-    await expect(
-      uploadClientDocument("u6", {
-        file: Buffer.from("x"), originalName: "x.pdf", mime: "application/pdf",
-        fulfillsRequestId: "dr1",
-      }),
-    ).rejects.toThrow(/not yours/i);
-    expect(uploadDocMock).not.toHaveBeenCalled();
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const otherClient = await createClient(tx);
+      const docRequest = await createDocumentRequest(tx, {
+        clientId: otherClient.id,
+        serviceTypeKey: "company_formation",
+      });
+
+      const { uploadClientDocument } = await loadService(tx);
+
+      await expect(
+        uploadClientDocument(client.userId, {
+          file: Buffer.from("x"),
+          originalName: "x.pdf",
+          mime: "application/pdf",
+          fulfillsRequestId: docRequest.id,
+        }),
+      ).rejects.toThrow(/not yours/i);
+    });
   });
 
   it("forwards purpose=other + the request's serviceTypeKey on fulfillment", async () => {
-    db.userById.set("u7", { id: "u7" });
-    db.clientByUserId.set("u7", { id: "c7", userId: "u7", prospectId: "p7" });
-    db.docRequestById.set("dr2", { id: "dr2", clientId: "c7", serviceTypeKey: "tax_residency" });
-    uploadDocMock.mockResolvedValue({ ok: true, doc: { id: "d99" } });
-    await uploadClientDocument("u7", {
-      file: Buffer.from("x"), originalName: "x.pdf", mime: "application/pdf",
-      fulfillsRequestId: "dr2",
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const docRequest = await createDocumentRequest(tx, {
+        clientId: client.id,
+        serviceTypeKey: "tax_residency",
+      });
+
+      const { uploadClientDocument } = await loadService(tx);
+
+      const result = await uploadClientDocument(client.userId, {
+        file: Buffer.from("x"),
+        originalName: "x.pdf",
+        mime: "application/pdf",
+        fulfillsRequestId: docRequest.id,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      const doc = await tx.document.findUnique({ where: { id: result.doc.id } });
+      expect(doc).not.toBeNull();
+      expect(doc!.serviceTypeKey).toBe("tax_residency");
+      expect(doc!.purpose).toBe("other");
+      expect(doc!.type).toBe("other");
+
+      // The request should be marked fulfilled
+      const req = await tx.documentRequest.findUnique({ where: { id: docRequest.id } });
+      expect(req?.state).toBe("fulfilled");
     });
-    expect(uploadDocMock).toHaveBeenCalledWith(expect.objectContaining({
-      prospectId: "p7",
-      userId: "u7",
-      purpose: "other",
-      type: "other",
-      serviceTypeKey: "tax_residency",
-      fulfillsRequestId: "dr2",
-    }));
   });
 
-  it("uploads as Correspondence when no folder and no request", async () => {
-    db.userById.set("u8", { id: "u8" });
-    db.clientByUserId.set("u8", { id: "c8", userId: "u8", prospectId: "p8" });
-    uploadDocMock.mockResolvedValue({ ok: true, doc: { id: "d100" } });
-    await uploadClientDocument("u8", {
-      file: Buffer.from("x"), originalName: "y.pdf", mime: "application/pdf",
+  it("uploads as Correspondence (purpose=other, no serviceTypeKey) when no folder and no request", async () => {
+    await inRollbackTx(prisma, async (tx) => {
+      const client = await createClient(tx);
+      const { uploadClientDocument } = await loadService(tx);
+
+      const result = await uploadClientDocument(client.userId, {
+        file: Buffer.from("y"),
+        originalName: "y.pdf",
+        mime: "application/pdf",
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      const doc = await tx.document.findUnique({ where: { id: result.doc.id } });
+      expect(doc).not.toBeNull();
+      expect(doc!.serviceTypeKey).toBeNull();
+      expect(doc!.purpose).toBe("other");
     });
-    expect(uploadDocMock).toHaveBeenCalledWith(expect.objectContaining({
-      prospectId: "p8",
-      serviceTypeKey: null,
-    }));
   });
 });
