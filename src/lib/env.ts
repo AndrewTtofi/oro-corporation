@@ -31,7 +31,7 @@ const schema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().email().optional(),
+  SMTP_FROM: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().optional(),
 
   // Compliance screening

@@ -93,6 +93,7 @@ jobs:
           echo "APP_URL=http://localhost" >> .env
           echo "AUTH_URL=http://localhost" >> .env
           echo "ALLOW_TEST_RESET=1" >> .env
+          echo "SMTP_FROM=no-reply@oro.local" >> .env
           mkdir -p public
       - name: Start dev stack
         run: |
