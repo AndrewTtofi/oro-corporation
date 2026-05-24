@@ -10,6 +10,23 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Added — Test hardening (PR #4)
+- Vitest projects split into `unit` (fast, mocked Prisma) and `integration` (real Postgres via @testcontainers/postgresql).
+- ~270 new tests across API routes (~30 routes, 4-6 tests each), worker jobs (auto-rescreen, periodic-review, backfill-compliance), service-layer (screening, client-portal migrated to real DB).
+- 8 Playwright E2E specs (`auth`, `onboarding-submit`, `convert-to-client`, `messaging`, `doc-request`, `compliance-gate`).
+- NODE_ENV-guarded `/api/test/reset?seed=1` route for E2E DB resets + seed; `ALLOW_TEST_RESET=1` env var allows enabling against dev stack.
+- Test-only `/api/test/setup-client` route for fast compliance clearance in E2E.
+- Rate-limiter bypass when `ALLOW_TEST_RESET=1` so E2E doesn't blow through the 5/10-min auth limit.
+- CI gains `integration` (testcontainers) and `e2e` (docker stack + Playwright) jobs.
+- Playwright HTML report uploaded as artifact on failure.
+
+### Fixed
+- `wrapTx` (test helper) now supports both callback and array forms of `prisma.$transaction(...)`.
+
+### Concerns surfaced (not fixed in this PR)
+- `src/worker/jobs/auto-rescreen.ts`: the outer `findMany` filter uses a 365-day floor that excludes high/standard-risk cases (cadence 30d/90d) whose latest run is younger than 365d but older than their band cadence. Per-case `cutoffForBand` check is correct but unreachable for these cases. Tracked for follow-up.
+- `src/app/api/admin/submissions/[id]/assign-partner/route.ts`: accepts any user UUID as `partnerId` without verifying the target's role. Tracked for follow-up.
+
 ### Added — Client portal v1 (PR #3, branch `feature/client-portal`)
 - Role-aware `/app/dashboard`: prospects keep the existing submission view; converted clients now see active services, upcoming key dates (next 30 d), open document requests, recent staff messages (7 d), recent activity, and a "book a follow-up" CTA when no booking is scheduled in the next 14 d.
 - `/app/messages`: unified read (`Message.prospectId` OR `Message.clientId`) so messages staff sent from the admin side after conversion are finally visible to the client; composer posts to the new `/api/account/messages`; staff bubbles are now visually distinct from peer/system bubbles.
