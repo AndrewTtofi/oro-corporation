@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { assertRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { uploadDocument, MAX_BYTES } from "@/lib/services/documents";
-import type { DocType } from "@prisma/client";
+import type { DocPurpose, DocType } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -28,8 +28,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     sof: "other",
     other: "other",
   };
+  const purposeMap: Record<string, DocPurpose> = {
+    passport: "passport",
+    proof_of_address: "proof_of_address",
+    sof: "sof",
+    other: "other",
+  };
   const type = typeMap[purposeRaw];
-  if (!type || !ALLOWED.includes(type)) return NextResponse.json({ error: "Invalid purpose" }, { status: 422 });
+  const purpose = purposeMap[purposeRaw];
+  if (!type || !ALLOWED.includes(type) || !purpose) return NextResponse.json({ error: "Invalid purpose" }, { status: 422 });
   if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 422 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "File too large" }, { status: 413 });
 
@@ -38,6 +45,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     prospectId: client.prospectId,
     userId: me.id,
     type,
+    purpose,
     originalName: file.name,
     mime: file.type || "application/octet-stream",
     buffer,

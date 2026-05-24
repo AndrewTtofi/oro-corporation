@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/guards";
 import { updateClientProfile, updatePrimaryStaff, updateClientStatus } from "@/lib/services/clients";
+import { prisma } from "@/lib/db";
 import type { ClientStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -24,6 +25,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = schema.safeParse(await req.json().catch(() => ({})));
   if (!body.success) return NextResponse.json({ error: "Invalid input" }, { status: 422 });
+
+  // Pre-validate so partial multi-write failure is rare. The three service
+  // calls are not yet wrapped in a shared transaction — if any throws after
+  // the first succeeded, that earlier write is committed. Most common failure
+  // modes (bad client id, bad primary staff target) are caught here.
+  const exists = await prisma.client.findUnique({ where: { id }, select: { id: true } });
+  if (!exists) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+  if (body.data.primaryStaffId !== undefined) {
+    const target = await prisma.user.findUnique({ where: { id: body.data.primaryStaffId }, select: { role: true } });
+    if (!target) return NextResponse.json({ error: "Staff member not found" }, { status: 404 });
+    if (target.role !== "staff") return NextResponse.json({ error: "New primary must be a staff user" }, { status: 400 });
+  }
 
   try {
     if (body.data.status !== undefined) {

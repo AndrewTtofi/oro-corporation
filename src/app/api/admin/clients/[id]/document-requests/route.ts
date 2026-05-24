@@ -20,10 +20,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = schema.safeParse(await req.json().catch(() => ({})));
   if (!body.success) return NextResponse.json({ error: "Invalid input" }, { status: 422 });
 
+  const client = await prisma.client.findUnique({ where: { id }, include: { user: { select: { email: true, fullName: true } } } });
+  if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+
   const created = await createDocumentRequest(id, body.data, me.id);
 
-  const client = await prisma.client.findUnique({ where: { id }, include: { user: { select: { email: true, fullName: true } } } });
-  if (client) {
+  {
     try {
       await email().send({
         to: client.user.email,

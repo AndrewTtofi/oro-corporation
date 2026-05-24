@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { storage } from "@/lib/providers/storage";
 import { logActivity } from "./activity";
-import type { DocStatus, DocType } from "@prisma/client";
+import type { DocPurpose, DocStatus, DocType } from "@prisma/client";
 
 const ALLOWED_MIME = new Set(["application/pdf", "image/jpeg", "image/png"]);
 export const MAX_BYTES = 10 * 1024 * 1024; // 10MB
@@ -16,6 +16,7 @@ export interface UploadInput {
   buffer: Buffer;
   serviceTypeKey?: string | null;
   fulfillsRequestId?: string | null;
+  purpose?: DocPurpose;
 }
 
 export async function uploadDocument(input: UploadInput) {
@@ -42,6 +43,7 @@ export async function uploadDocument(input: UploadInput) {
       mime: input.mime,
       sizeBytes: stored.sizeBytes,
       serviceTypeKey: input.serviceTypeKey ?? null,
+      ...(input.purpose !== undefined && { purpose: input.purpose }),
     },
   });
 

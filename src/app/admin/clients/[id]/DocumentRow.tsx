@@ -54,7 +54,7 @@ export function DocumentRow({ doc }: { doc: DocRowProps }) {
       {open && (
         <tr>
           <td colSpan={6} className="p-2">
-            <iframe src={`/app/documents/${doc.id}`} className="w-full h-[480px] bg-admin-bg border border-admin-border rounded-elem" />
+            <iframe src={`/api/documents/${doc.id}`} className="w-full h-[480px] bg-admin-bg border border-admin-border rounded-elem" />
           </td>
         </tr>
       )}
