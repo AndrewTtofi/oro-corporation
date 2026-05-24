@@ -124,9 +124,13 @@ export default async function ClientProfilePage({ params }: { params: Promise<{ 
             clientId={client.id}
             status={client.status}
             primaryStaff={{ id: client.primaryStaff.id, name: client.primaryStaff.fullName, role: "Primary Contact / Partner" }}
-            extras={client.services
-              .filter((s) => s.assignedPartner && s.assignedPartner.id !== client.primaryStaff.id)
-              .map((s) => ({ id: s.assignedPartner!.id, name: s.assignedPartner!.fullName, role: "Assigned Partner" }))}
+            extras={Array.from(
+              new Map(
+                client.services
+                  .filter((s) => s.assignedPartner && s.assignedPartner.id !== client.primaryStaff.id)
+                  .map((s) => [s.assignedPartner!.id, { id: s.assignedPartner!.id, name: s.assignedPartner!.fullName, role: "Assigned Partner" }]),
+              ).values(),
+            )}
             partners={partners}
           />
 
