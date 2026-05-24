@@ -3,6 +3,7 @@ import { ProspectStatus } from "@prisma/client";
 import { logActivity } from "./activity";
 import { notify } from "@/lib/providers/notify";
 import { allocateReferenceNumber } from "./reference";
+import { checkComplianceGateForProspect } from "@/lib/services/compliance/gate";
 
 export async function setSubmissionStatus(args: {
   prospectId: string;
@@ -70,6 +71,11 @@ export async function convertProspectToClient(args: {
   if (prospect.status !== "approved") return { ok: false as const, reason: "NOT_APPROVED" as const };
   if (prospect.client) return { ok: true as const, client: prospect.client };
 
+  const gate = await checkComplianceGateForProspect(args.prospectId);
+  if (!gate.ok) {
+    throw Object.assign(new Error("COMPLIANCE_GATE_FAILED"), { reason: gate.reason });
+  }
+
   const primaryStaffId = args.primaryStaffId ?? args.actorId;
 
   const client = await prisma.$transaction(async (tx) => {
@@ -92,6 +98,11 @@ export async function convertProspectToClient(args: {
       });
     }
     return c;
+  });
+
+  await prisma.complianceFile.update({
+    where: { prospectId: args.prospectId },
+    data: { clientId: client.id },
   });
 
   await logActivity({

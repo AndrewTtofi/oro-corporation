@@ -16,11 +16,20 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 422 });
 
-  const out = await convertProspectToClient({
-    prospectId: parsed.data.prospectId,
-    actorId: user.id,
-    primaryStaffId: parsed.data.primaryStaffId,
-  });
+  let out;
+  try {
+    out = await convertProspectToClient({
+      prospectId: parsed.data.prospectId,
+      actorId: user.id,
+      primaryStaffId: parsed.data.primaryStaffId,
+    });
+  } catch (e) {
+    const err = e as { message?: string; reason?: string };
+    if (err.message === "COMPLIANCE_GATE_FAILED") {
+      return NextResponse.json({ error: err.reason ?? "compliance_not_cleared" }, { status: 409 });
+    }
+    throw e;
+  }
   if (!out.ok) {
     return NextResponse.json({ error: out.reason }, { status: out.reason === "NOT_APPROVED" ? 422 : 404 });
   }
