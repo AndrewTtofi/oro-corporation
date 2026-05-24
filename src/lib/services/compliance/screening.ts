@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { screening, type ScreeningQuery } from "@/lib/providers/screening";
+import { logActivity } from "@/lib/services/activity";
 
 export async function runScreening(kycCaseId: string, opts: { actorId: string | null }) {
   const kyc = await prisma.kycCase.findUnique({
@@ -57,6 +58,13 @@ export async function runScreening(kycCaseId: string, opts: { actorId: string | 
       data: { latestScreeningRunId: run.id },
     });
   }
+
+  await logActivity({
+    entityType: "screening_run", entityId: run.id,
+    action: "compliance.screening_run",
+    actorId: opts.actorId ?? undefined,
+    meta: { kycCaseId, outcome: result.outcome, hitCount: result.hits.length },
+  });
 
   return run;
 }

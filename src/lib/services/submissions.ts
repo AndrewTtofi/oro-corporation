@@ -97,12 +97,11 @@ export async function convertProspectToClient(args: {
         })),
       });
     }
+    await tx.complianceFile.update({
+      where: { prospectId: args.prospectId },
+      data: { clientId: c.id },
+    });
     return c;
-  });
-
-  await prisma.complianceFile.update({
-    where: { prospectId: args.prospectId },
-    data: { clientId: client.id },
   });
 
   await logActivity({

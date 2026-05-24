@@ -38,6 +38,9 @@ vi.mock("@/lib/db", () => ({
         return { count: data.length };
       },
     },
+    activityLog: {
+      create: async () => null,
+    },
     $transaction: async (fn: any) => fn(this),
   },
 }));

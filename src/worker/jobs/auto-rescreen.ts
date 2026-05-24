@@ -45,20 +45,28 @@ export async function autoRescreenTick() {
         externalId: h.externalId, topics: h.matchedTopics,
       }));
       if (diffHitsForAlert(previousHits, currentHits)) {
-        await prisma.reviewTask.create({
-          data: {
-            complianceFileId: kyc.party.complianceFileId,
-            kind: "screening_hit",
-            dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            note: `New/changed hits for ${kyc.party.fullName}`,
-          },
+        // Don't dupe — if staff hasn't reviewed the previous screening_hit task,
+        // re-firing on each tick would spam the queue. One open task per file.
+        const existing = await prisma.reviewTask.findFirst({
+          where: { complianceFileId: kyc.party.complianceFileId, kind: "screening_hit", state: "open" },
+          select: { id: true },
         });
-        await logActivity({
-          entityType: "compliance_file", entityId: kyc.party.complianceFileId,
-          action: "compliance.review_task_created",
-          meta: { kind: "screening_hit", kycCaseId: kyc.id },
-        });
-        created += 1;
+        if (!existing) {
+          await prisma.reviewTask.create({
+            data: {
+              complianceFileId: kyc.party.complianceFileId,
+              kind: "screening_hit",
+              dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              note: `New/changed hits for ${kyc.party.fullName}`,
+            },
+          });
+          await logActivity({
+            entityType: "compliance_file", entityId: kyc.party.complianceFileId,
+            action: "compliance.review_task_created",
+            meta: { kind: "screening_hit", kycCaseId: kyc.id },
+          });
+          created += 1;
+        }
       }
       await new Promise((r) => setTimeout(r, 250)); // throttle
     } catch (e) {
