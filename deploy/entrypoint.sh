@@ -5,7 +5,7 @@ set -e
 
 if [ -n "$DATABASE_URL" ]; then
   echo "[oro-entrypoint] applying prisma migrations…"
-  ./node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma
+  node ./node_modules/prisma/build/index.js migrate deploy --schema=./prisma/schema.prisma
 
   if [ "$SEED_ON_BOOT" = "true" ]; then
     echo "[oro-entrypoint] running idempotent seed (SEED_ON_BOOT=true)…"

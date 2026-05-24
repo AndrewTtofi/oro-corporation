@@ -36,11 +36,11 @@ COPY --from=builder --chown=oro:oro /app/.next/standalone ./
 COPY --from=builder --chown=oro:oro /app/.next/static ./.next/static
 COPY --from=builder --chown=oro:oro /app/public ./public
 
-# Prisma artifacts for `prisma migrate deploy` at boot + worker bundle
+# Prisma artifacts for `prisma migrate deploy` at boot + worker bundle.
+# The worker (node-cron, nodemailer, argon2, …) is not traced by next build's
+# standalone output, so ship the full production node_modules alongside it.
 COPY --from=builder --chown=oro:oro /app/prisma ./prisma
-COPY --from=builder --chown=oro:oro /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=oro:oro /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=oro:oro /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=oro:oro /app/node_modules ./node_modules
 COPY --from=builder --chown=oro:oro /app/dist-worker ./dist-worker
 
 # Entrypoint runs migrations + optional seed, then execs the requested command

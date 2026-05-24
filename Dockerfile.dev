@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1.7
+# Dev-only image: brings deps + Prisma client. Source is bind-mounted at runtime
+# so edits trigger Next.js hot reload and tsx watch for the worker.
+FROM node:20-alpine
+RUN apk add --no-cache libc6-compat python3 make g++ openssl curl
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install --no-audit --no-fund
+COPY prisma ./prisma
+RUN npx prisma generate
+EXPOSE 3000
