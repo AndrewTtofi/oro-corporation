@@ -12,6 +12,35 @@ permissions:
   packages: write
 
 jobs:
+  changelog:
+    name: Changelog updated
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify CHANGELOG.md is in this PR's diff
+        run: |
+          base="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "Files changed in this PR:"
+          echo "$changed"
+          # Docs-only PRs are exempt — if every change is under docs/ or in this skip-list,
+          # we don't require a changelog entry.
+          non_doc=$(echo "$changed" | grep -Ev '^(docs/|\.github/pull_request_template\.md$|CHANGELOG\.md$)' || true)
+          if [ -z "$non_doc" ]; then
+            echo "Docs-only PR — changelog requirement waived."
+            exit 0
+          fi
+          if echo "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md updated."
+            exit 0
+          fi
+          echo "::error::CHANGELOG.md was not updated. Add an entry under the Unreleased section in CHANGELOG.md before merging."
+          exit 1
+
   validate:
     name: Lint + typecheck + prisma validate
     runs-on: ubuntu-latest

@@ -32,16 +32,28 @@ export default async function MessagesPage() {
 
         <div className="bg-[var(--client-surface)] border border-token rounded-card p-6 mb-6 flex flex-col gap-4">
           {messages.length === 0 && <p className="text-muted text-meta">No messages yet. Send the first one below.</p>}
-          {messages.map((m) => (
-            <div key={m.id} className={`flex flex-col ${m.senderId === user.id ? "items-end" : "items-start"}`}>
-              <div className="text-[11px] text-muted">
-                {m.sender?.fullName ?? "ORO team"} · {new Date(m.createdAt).toLocaleString()}
+          {messages.map((m) => {
+            const isMine = m.senderId === user.id;
+            const isStaff = m.sender?.role === "staff";
+            const bubbleCls = isMine
+              ? "bg-accent text-dark"
+              : isStaff
+                ? "bg-dark text-white"
+                : "bg-[var(--client-bg)]";
+            const label = isStaff
+              ? `${m.sender?.fullName ?? "ORO team"} · ORO Staff`
+              : (m.sender?.fullName ?? "ORO team");
+            return (
+              <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+                <div className="text-[11px] text-muted">
+                  {label} · {new Date(m.createdAt).toLocaleString()}
+                </div>
+                <div className={`mt-1 rounded-card px-4 py-2 max-w-[70%] ${bubbleCls}`}>
+                  <p className="text-meta whitespace-pre-wrap">{m.body}</p>
+                </div>
               </div>
-              <div className={`mt-1 rounded-card px-4 py-2 max-w-[70%] ${m.senderId === user.id ? "bg-accent text-dark" : "bg-[var(--client-bg)]"}`}>
-                <p className="text-meta whitespace-pre-wrap">{m.body}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <MessageComposer />

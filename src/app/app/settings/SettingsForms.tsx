@@ -20,17 +20,20 @@ export function SettingsForms({
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
   const [pwdMsg, setPwdMsg] = useState<string | null>(null);
   const [companyMsg, setCompanyMsg] = useState<string | null>(null);
-  const [pending, start] = useTransition();
+  // Separate transitions so submitting one form doesn't disable buttons on the others.
+  const [profilePending, startProfile] = useTransition();
+  const [companyPending, startCompany] = useTransition();
+  const [pwdPending, startPwd] = useTransition();
 
   async function saveProfile(fd: FormData) {
     setProfileMsg(null);
-    start(async () => {
+    startProfile(async () => {
       const res = await fetch("/api/account/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: fd.get("fullName"),
-          phone: fd.get("phone"),
+          phone: fd.get("phone") || null,
           languagePref: fd.get("languagePref"),
         }),
       });
@@ -40,13 +43,15 @@ export function SettingsForms({
 
   async function saveCompany(fd: FormData) {
     setCompanyMsg(null);
-    start(async () => {
+    startCompany(async () => {
       const res = await fetch("/api/account/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: fd.get("address"),
-          taxResidency: fd.get("taxResidency"),
+          // Empty string fails Zod's .length(2) on taxResidency — coerce to null
+          // so clearing the field actually clears it.
+          address: fd.get("address") || null,
+          taxResidency: fd.get("taxResidency") || null,
         }),
       });
       setCompanyMsg(res.ok ? "Saved" : "Could not save");
@@ -55,7 +60,7 @@ export function SettingsForms({
 
   async function changePassword(fd: FormData) {
     setPwdMsg(null);
-    start(async () => {
+    startPwd(async () => {
       const res = await fetch("/api/account/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -93,7 +98,7 @@ export function SettingsForms({
         </Field>
         <div className="flex items-center justify-between">
           <div className="text-meta text-muted">{profileMsg}</div>
-          <button type="submit" disabled={pending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
+          <button type="submit" disabled={profilePending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
             Save changes
           </button>
         </div>
@@ -136,7 +141,7 @@ export function SettingsForms({
 
           <div className="flex items-center justify-between">
             <div className="text-meta text-muted">{companyMsg}</div>
-            <button type="submit" disabled={pending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
+            <button type="submit" disabled={companyPending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
               Save company details
             </button>
           </div>
@@ -156,7 +161,7 @@ export function SettingsForms({
         </Field>
         <div className="flex items-center justify-between">
           <div className="text-meta text-muted">{pwdMsg}</div>
-          <button type="submit" disabled={pending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
+          <button type="submit" disabled={pwdPending} className="btn btn-primary px-6 py-3 disabled:opacity-50">
             Update password
           </button>
         </div>
