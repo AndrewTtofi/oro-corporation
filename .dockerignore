@@ -1,0 +1,23 @@
+node_modules
+.next
+out
+dist-worker
+.git
+.github
+.env
+.env.*
+!.env.example
+Dockerfile*
+docker-compose*.yml
+*.md
+!prisma/**
+.vscode
+.idea
+coverage
+backups
+data
+.claude
+ORO.zip
+ORO\ MVP.pdf
+ORO_MVP.pdf
+prompt.md
