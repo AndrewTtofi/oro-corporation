@@ -11,7 +11,7 @@ RUN apk add --no-cache libc6-compat python3 make g++ openssl
 WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN npm ci --no-audit --no-fund
+RUN npm ci --no-audit --no-fund --legacy-peer-deps
 
 # 2) build — compile Next.js (standalone) + worker TS
 FROM node:20-alpine AS builder
