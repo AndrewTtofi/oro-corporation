@@ -488,7 +488,7 @@ model KycCase {
   sofDocId              String?
   sofNote               String?
 
-  latestScreeningRunId  String?
+  latestScreeningRunId  String? @unique
   latestScreeningRun    ScreeningRun? @relation("LatestScreening", fields: [latestScreeningRunId], references: [id])
 
   state                 KycCaseState @default(pending)
@@ -517,7 +517,7 @@ model ScreeningRun {
   errorMessage    String?
 
   hits            ScreeningHit[]
-  latestForCase   KycCase[] @relation("LatestScreening")
+  latestForCase   KycCase?  @relation("LatestScreening")
 
   @@index([kycCaseId, ranAt])
 }
