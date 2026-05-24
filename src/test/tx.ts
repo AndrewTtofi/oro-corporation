@@ -25,7 +25,15 @@ export function wrapTx(tx: PrismaClient): PrismaClient {
   return new Proxy(tx, {
     get(target, prop) {
       if (prop === "$transaction") {
-        return (fn: (tx: PrismaClient) => Promise<unknown>) => fn(wrapTx(tx));
+        // Handle both forms:
+        //   1. Callback: prisma.$transaction(async (tx) => { ... })
+        //   2. Array: prisma.$transaction([promise1, promise2, ...])
+        return (fnOrArray: ((tx: PrismaClient) => Promise<unknown>) | Promise<unknown>[]) => {
+          if (Array.isArray(fnOrArray)) {
+            return Promise.all(fnOrArray);
+          }
+          return fnOrArray(wrapTx(tx));
+        };
       }
       const val = (target as Record<string | symbol, unknown>)[prop];
       if (typeof val === "function") return val.bind(target);
