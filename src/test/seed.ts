@@ -88,3 +88,34 @@ export async function createKycCase(
     },
   });
 }
+
+export async function createPartner(tx: PrismaClient) {
+  return createUser(tx, { role: "partner" });
+}
+
+export async function createService(
+  tx: PrismaClient,
+  opts: { key?: string; label?: string; active?: boolean } = {},
+) {
+  const key = opts.key ?? `svc_${uniq().replace(/-/g, "_")}`;
+  return tx.service.create({
+    data: {
+      key,
+      label: opts.label ?? `Service ${key}`,
+      active: opts.active ?? true,
+    },
+  });
+}
+
+export async function createClientService(
+  tx: PrismaClient,
+  opts: { clientId: string; serviceType?: string },
+) {
+  return tx.clientService.create({
+    data: {
+      clientId: opts.clientId,
+      serviceType: opts.serviceType ?? "accounting",
+      status: "pending",
+    },
+  });
+}
