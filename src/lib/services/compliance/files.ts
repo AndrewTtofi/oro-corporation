@@ -50,10 +50,9 @@ export async function createComplianceFileForProspect(prospectId: string, actorI
   });
 
   await logActivity({
-    // TODO Task 11 widens these unions; the cast is removed there.
-    entityType: "compliance_file" as never,
+    entityType: "compliance_file",
     entityId: file.id,
-    action: "compliance.file_created" as never,
+    action: "compliance.file_created",
     actorId: actorId ?? undefined,
     meta: { prospectId },
   });
