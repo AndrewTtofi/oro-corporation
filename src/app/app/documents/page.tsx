@@ -56,6 +56,7 @@ export default async function MyDocumentsPage() {
           <p className="eyebrow mb-2">Documents</p>
           <h1 className="font-display text-3xl">Your documents</h1>
           <p className="text-muted mt-2 text-meta">Encrypted at rest, accessible only to authorized ORO staff and assigned partners.</p>
+          <p className="text-muted mt-2 text-meta">Documents you upload are kept for audit. Contact your account manager if a document needs to be removed.</p>
         </div>
         {client && <ArbitraryUploadModal folders={arbitraryFolders} />}
       </div>
