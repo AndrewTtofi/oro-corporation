@@ -1,30 +1,93 @@
 # Dev overlay — start with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 # Adds mailpit (catches outbound mail) and minio (S3-compatible local storage).
 # Disables Caddy's auto-HTTPS in favor of plain HTTP for localhost iteration.
+# Replaces the production `next start` setup with `next dev` + `tsx watch` so
+# host source edits hot-reload in the container without an image rebuild.
 
 services:
   proxy:
+    # http:// prefix disables Caddy's auto-HTTPS, so localhost works on :80 only.
     environment:
-      ORO_DOMAIN: localhost
+      ORO_DOMAIN: http://localhost
     ports:
       - "80:80"
 
   web:
+    image: oro:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    # Reset the prod entrypoint (which tries to `node server.js` from a
+    # baked-in standalone build) and run Next.js in dev mode against the
+    # bind-mounted source. db push keeps schema in sync without migrations.
+    entrypoint: []
+    command:
+      - sh
+      - -c
+      - |
+        node ./node_modules/prisma/build/index.js db push --schema=./prisma/schema.prisma --skip-generate --accept-data-loss
+        if [ "$$SEED_ON_BOOT" = "true" ]; then
+          npx tsx prisma/seed.ts || echo "[dev] seed failed (continuing)"
+        fi
+        exec npm run dev -- --hostname 0.0.0.0 --port 3000
     environment:
       NODE_ENV: development
       SEED_ON_BOOT: "true"
       EMAIL_DRIVER: smtp
       SMTP_HOST: mail
       SMTP_PORT: 1025
+      HOSTNAME: 0.0.0.0
+      # Faster file-change pickup over the bind mount on macOS/Windows.
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./:/app
+      # Named volume masks the bind mount so the container keeps its own
+      # linux/arm64-built node_modules (argon2 native bindings, etc.).
+      - oro_node_modules:/app/node_modules
+      - oro_next:/app/.next
+    ports:
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
       mail:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 30
 
   worker:
+    image: oro:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    entrypoint: []
+    command: ["npm", "run", "worker:dev"]
     environment:
       NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./:/app
+      - oro_node_modules:/app/node_modules
+    healthcheck:
+      # In dev the worker runs via tsx (not a compiled node bundle), so override
+      # the prod healthcheck that looks for dist-worker/worker/index.js.
+      test: ["CMD-SHELL", "pgrep -f 'tsx' > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  db:
+    # Pin literal credentials so the dev DB matches the DATABASE_URL in .env
+    # regardless of POSTGRES_* vars in the developer's shell.
+    environment:
+      POSTGRES_USER: oro
+      POSTGRES_PASSWORD: oro
+      POSTGRES_DB: oro
 
   mail:
     image: axllent/mailpit
@@ -59,3 +122,5 @@ services:
 
 volumes:
   minio_data:
+  oro_node_modules:
+  oro_next:
