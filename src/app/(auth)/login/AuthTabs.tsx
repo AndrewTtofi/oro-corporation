@@ -94,52 +94,22 @@ export function AuthTabs({
 
   return (
     <>
-      <div className="flex gap-8 border-b border-token mb-8">
-        <button
-          type="button"
-          onClick={() => setTab("signin")}
-          className={`relative pb-3 font-mono text-[11px] tracking-[0.22em] uppercase transition-colors duration-500 ${
-            tab === "signin" ? "text-ink" : "text-muted hover:text-ink"
-          }`}
-        >
-          Sign In
-          <span
-            aria-hidden
-            className={`absolute -bottom-px left-0 right-0 h-px transition-transform duration-500 origin-left ${
-              tab === "signin" ? "scale-x-100" : "scale-x-0"
-            }`}
-            style={{ background: "var(--accent)" }}
-          />
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("signup")}
-          className={`relative pb-3 font-mono text-[11px] tracking-[0.22em] uppercase transition-colors duration-500 ${
-            tab === "signup" ? "text-ink" : "text-muted hover:text-ink"
-          }`}
-        >
-          Sign Up
-          <span
-            aria-hidden
-            className={`absolute -bottom-px left-0 right-0 h-px transition-transform duration-500 origin-left ${
-              tab === "signup" ? "scale-x-100" : "scale-x-0"
-            }`}
-            style={{ background: "var(--accent)" }}
-          />
-        </button>
+      <div className="auth-tabs">
+        <button type="button" onClick={() => setTab("signin")} className={tab === "signin" ? "active" : ""}>Sign in</button>
+        <button type="button" onClick={() => setTab("signup")} className={tab === "signup" ? "active" : ""}>Create account</button>
       </div>
 
       {error && (
         <div
-          className="mb-5 px-4 py-3 text-[13px] flex items-start gap-3"
+          className="mb-5 px-4 py-3 flex items-start gap-3"
           style={{
-            background: "rgba(122,31,31,0.05)",
-            color: "var(--oxblood)",
-            borderLeft: "2px solid var(--oxblood)",
+            background: "var(--danger-tint)",
+            color: "var(--danger)",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "0.8125rem",
           }}
           role="alert"
         >
-          <span className="font-mono text-[10px] tracking-[0.2em] uppercase mt-0.5 shrink-0">Note</span>
           <span>{error}</span>
         </div>
       )}
@@ -152,10 +122,10 @@ export function AuthTabs({
           <Field label="Email Address">
             <input name="email" type="email" required autoComplete="email" placeholder="e.g. alex@example.com" className="input" />
           </Field>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <div className="flex justify-between items-center">
-              <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">Password</span>
-              <Link href="/forgot" className="font-mono text-[10px] tracking-[0.22em] uppercase link-gold text-accent-deep">Forgot</Link>
+              <span className="flabel" style={{ marginBottom: 0 }}>Password</span>
+              <Link href="/forgot" className="text-brand" style={{ fontSize: "0.75rem" }}>Forgot?</Link>
             </div>
             <input name="password" type="password" required autoComplete="current-password" className="input" />
           </div>
@@ -175,7 +145,7 @@ export function AuthTabs({
             <input name="email" type="email" required autoComplete="email" className="input" />
           </Field>
           <div className="flex flex-col gap-2">
-            <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">Telephone</span>
+            <span className="flabel">Telephone</span>
             <div className="flex gap-2">
               <select name="phoneCountry" className="input figure" style={{ width: 110, padding: "12px" }} defaultValue="+357">
                 {COUNTRY_CODES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -198,7 +168,7 @@ export function AuthTabs({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">{label}</label>
+      <label className="flabel">{label}</label>
       {children}
     </div>
   );
