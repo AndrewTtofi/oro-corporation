@@ -16,6 +16,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 - `docker-compose.prod.yml` — single-host hardening overlay (resource caps, log rotation, no-new-privileges, pids limits).
 - `deploy/SERVER.md` — generic Ubuntu server runbook; `deploy/backup.sh` + systemd units for nightly db+docs+secrets backups; `make backup-all` / `restore-all`.
 
+### Fixed — CI
+- `e2e/messaging.spec.ts` used the **client** composer's selectors against the **staff** page — wrong textarea placeholder (`Type a message…` vs `Address the client. Be precise.`) and a button matcher (`/^send$/i`) that never matched the actual `Send →` button. Fixed both; this was the only red E2E test (pre-existing) and blocked the green CI gate that auto-deploy depends on.
+
 ### Added — Bucket-A polish (PR #4)
 - Hit-review status pill per party on the compliance file dashboard: shows "N to review" in red when unreviewed hits exist.
 - "Last screened / next due" per-party indicator with risk-band cadence math (high=30d, standard=90d, low=365d); turns red when overdue.

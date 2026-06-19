@@ -75,8 +75,8 @@ test("staff sends a message → client sees it in /app/messages", async ({ page,
 
   // ── 4. Staff sends a message ──────────────────────────────────────────────
   await page.goto(`/admin/clients/${clientId}/messages`);
-  await page.locator("textarea[placeholder='Type a message…']").fill("Hello from ORO team — please check your documents.");
-  await page.getByRole("button", { name: /^send$/i }).click();
+  await page.locator("textarea[placeholder='Address the client. Be precise.']").fill("Hello from ORO team — please check your documents.");
+  await page.getByRole("button", { name: /^send/i }).click();
   // Wait for the message to appear in the thread
   await expect(page.getByText("Hello from ORO team — please check your documents.")).toBeVisible({ timeout: 10000 });
 
