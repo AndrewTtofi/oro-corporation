@@ -1,0 +1,18 @@
+name: runner-smoke
+
+# Temporary smoke test for the self-hosted runner. Manual trigger only.
+# Confirms a job actually executes on the box and that the Docker socket works.
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, oro-ci]
+    steps:
+      - name: Identify the runner
+        run: |
+          echo "host:        $(hostname)"
+          echo "runner name: ${RUNNER_NAME:-?}"
+          echo "os/arch:     $(uname -s)/$(uname -m)"
+      - name: Verify Docker access (sock mount)
+        run: docker version --format 'docker server: {{.Server.Version}}'
