@@ -15,4 +15,5 @@ jobs:
           echo "runner name: ${RUNNER_NAME:-?}"
           echo "os/arch:     $(uname -s)/$(uname -m)"
       - name: Verify Docker access (sock mount)
-        run: docker version --format 'docker server: {{.Server.Version}}'
+        run: |
+          docker version --format 'docker server: {{.Server.Version}}'
