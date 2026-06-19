@@ -1,0 +1,51 @@
+name: deploy-oro
+
+# Deploys ORO to the ORO host via the self-hosted runner over the private
+# network. The runner SSHes to the ORO box and runs deploy/deploy-oro.sh
+# (git pull → pull prebuilt image → up → health gate). No public SSH involved.
+#
+# Triggers:
+#   • after CI succeeds on main (deploys the freshly built image)
+#   • manual (Actions → deploy-oro → Run workflow)
+#
+# Required repo secret:
+#   ORO_DEPLOY_KEY  — private SSH key authorized on the ORO box (ubuntu@10.50.40.100)
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-oro
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ORO (self-hosted → 10.50.40.100)
+    runs-on: [self-hosted, oro-ci]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Deploy over the private network
+        env:
+          ORO_DEPLOY_KEY: ${{ secrets.ORO_DEPLOY_KEY }}
+          ORO_HOST: 10.50.40.100
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$ORO_DEPLOY_KEY" > "$HOME/.ssh/oro_deploy"
+          chmod 600 "$HOME/.ssh/oro_deploy"
+          trap 'rm -f "$HOME/.ssh/oro_deploy"' EXIT
+
+          ssh -i "$HOME/.ssh/oro_deploy" -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+              ubuntu@"$ORO_HOST" '
+            set -euo pipefail
+            cd /opt/oro
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+            bash deploy/deploy-oro.sh
+          '

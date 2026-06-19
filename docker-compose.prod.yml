@@ -1,0 +1,71 @@
+# ───────────────────────────────────────────────────────────────────────
+#  ORO — production hardening overlay.
+#
+#  Layer this ON TOP of docker-compose.yml on a single prod host:
+#
+#      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+#  (or just `make up` — the Makefile wires this overlay in for you.)
+#
+#  Adds, per service, what the base compose deliberately leaves generic:
+#    • resource limits   — memory + CPU caps so no one container can OOM the box
+#    • log rotation      — bounded json-file logs (default docker logs grow forever)
+#    • no-new-privileges — kernel flag: a process can't gain privileges via setuid
+#    • pids_limit        — fork-bomb / runaway-process backstop
+#
+#  Tuned for the recommended 2 vCPU / 4 GB box. On an 8 GB box you can raise
+#  the web/db memory limits; on a 2 GB box, drop web to 1g and add swap.
+# ───────────────────────────────────────────────────────────────────────
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  proxy:
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+
+  web:
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    deploy:
+      resources:
+        limits:
+          cpus: "1.50"
+          memory: 1536M
+
+  worker:
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+
+  db:
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    # Give Postgres a moment to flush + checkpoint on shutdown before SIGKILL.
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1024M

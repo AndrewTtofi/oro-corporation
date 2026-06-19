@@ -1,0 +1,28 @@
+# ORO nightly backup — systemd service unit (paired with oro-backup.timer).
+#
+# Install (as root), editing User/paths to match your box:
+#   sudo cp deploy/oro-backup.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now oro-backup.timer
+#   systemctl list-timers oro-backup.timer      # confirm next run
+#   sudo systemctl start oro-backup.service     # run one now to test
+#   journalctl -u oro-backup.service -f         # watch it
+
+[Unit]
+Description=ORO full persistent-data backup (db + docs + secrets)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+# The user that owns the repo and is in the 'docker' group.
+User=ubuntu
+WorkingDirectory=/home/ubuntu/oro
+ExecStart=/home/ubuntu/oro/deploy/backup.sh
+# Off-box copy + at-rest encryption (recommended). Uncomment + set:
+# Environment=RCLONE_REMOTE=s3:oro-backups
+# Environment=ENV_BACKUP_PASSPHRASE=change-me-long-random
+Environment=RETENTION_DAYS=14
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
