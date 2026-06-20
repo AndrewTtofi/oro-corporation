@@ -35,8 +35,7 @@ jobs:
             echo "===== .env auth-relevant ====="
             grep -E '^(AUTH_URL|APP_URL|AUTH_SECRET|AUTH_TRUST_HOST|NEXTAUTH)' .env | sed -E 's/(SECRET=).*/\1<redacted>/'
             echo "===== user diagnostic ====="
-            echo "$DIAG_B64" | base64 -d > /tmp/oro_diag.js
-            docker compose cp /tmp/oro_diag.js web:/tmp/oro_diag.js
-            docker compose exec -T web node /tmp/oro_diag.js
-            rm -f /tmp/oro_diag.js
+            # Pipe decoded JS into the web container's WORKDIR so node resolves
+            # @prisma/client / argon2 from the app's node_modules.
+            echo "$DIAG_B64" | base64 -d | docker compose exec -T web sh -c 'cat > ./oro_diag.js && node ./oro_diag.js; rm -f ./oro_diag.js'
           REMOTE
