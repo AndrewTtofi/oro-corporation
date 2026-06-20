@@ -114,12 +114,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-16 text-center">
-                    <p
-                      className="font-display italic text-[24px] text-muted mb-2"
-                      style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-                    >
-                      No clients yet.
-                    </p>
+                    <p className="mb-2" style={{ fontSize: "1.125rem", fontWeight: 600 }}>No clients yet.</p>
                     <p className="text-[13px] text-muted">
                       Convert an approved submission to add your first engagement.
                     </p>

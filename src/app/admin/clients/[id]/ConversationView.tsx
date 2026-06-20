@@ -23,12 +23,7 @@ export function ConversationView({
         <div className="mb-8 flex items-baseline justify-between">
           <div>
             <div className="eyebrow mb-3">Correspondence</div>
-            <h2
-              className="font-display text-[34px] leading-[1.1] tracking-[-0.025em] text-ink"
-              style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60' }}
-            >
-              With {clientName}
-            </h2>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.01em" }}>With {clientName}</h2>
           </div>
           <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">
             {messages.length} {messages.length === 1 ? "message" : "messages"}
@@ -42,12 +37,7 @@ export function ConversationView({
         >
           {messages.length === 0 && (
             <div className="text-center py-12">
-              <div
-                className="font-display italic text-[28px] text-accent-deep mb-3"
-                style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-              >
-                No correspondence yet.
-              </div>
+              <div className="mb-3" style={{ fontSize: "1.25rem", fontWeight: 600 }}>No correspondence yet.</div>
               <p className="text-muted text-[14px] max-w-[42ch] mx-auto">
                 Send the first message below. The client will receive it in
                 their portal and via email.
@@ -140,8 +130,8 @@ function Bubble({
           <div
             className="w-9 h-9 grid place-items-center font-mono text-[10px] tracking-[0.08em] uppercase"
             style={{
-              background: fromStaff ? "var(--ink)" : "var(--accent-tint, #E9DDBE)",
-              color: fromStaff ? "var(--accent)" : "var(--ink)",
+              background: fromStaff ? "var(--brand)" : "var(--surface-2)",
+              color: fromStaff ? "#fff" : "var(--fg)",
               borderRadius: "999px",
               boxShadow: fromStaff
                 ? "0 0 0 1px rgba(176,141,62,0.4)"
@@ -168,9 +158,9 @@ function Bubble({
         <div
           className="px-5 py-3.5 text-[14.5px] leading-[1.55] whitespace-pre-wrap"
           style={{
-            background: fromStaff ? "var(--ink)" : "var(--bone)",
-            color: fromStaff ? "var(--bone)" : "var(--ink)",
-            border: fromStaff ? "1px solid var(--ink)" : "1px solid var(--admin-border)",
+            background: fromStaff ? "var(--brand)" : "var(--surface-2)",
+            color: fromStaff ? "#fff" : "var(--fg)",
+            border: fromStaff ? "1px solid var(--brand)" : "1px solid var(--border)",
             borderRadius: "2px",
             boxShadow: fromStaff
               ? "0 1px 0 rgba(176,141,62,0.2), 0 14px 28px -16px rgba(60,40,16,0.3)"

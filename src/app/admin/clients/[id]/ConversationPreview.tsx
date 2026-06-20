@@ -38,12 +38,7 @@ export function ConversationPreview({
 
       {recent.length === 0 ? (
         <div className="py-8 text-center">
-          <p
-            className="font-display italic text-[18px] text-muted mb-2"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-          >
-            No messages yet.
-          </p>
+          <p className="text-muted mb-2" style={{ fontSize: "0.9375rem" }}>No messages yet.</p>
           <Link
             href={`?tab=conversation`}
             className="font-mono text-[10px] tracking-[0.22em] uppercase text-accent-deep link-gold"

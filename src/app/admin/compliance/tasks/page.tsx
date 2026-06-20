@@ -60,19 +60,8 @@ export default async function TasksPage() {
     <AdminShell active="compliance">
       {/* ─── Intro ────────────────────────────────────────────────── */}
       <section className="mb-12 max-w-[60ch]">
-        <div className="eyebrow eyebrow-line mb-6">Review Queue</div>
-        <h1
-          className="font-display text-[44px] leading-[1.05] tracking-[-0.025em] text-ink"
-          style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60' }}
-        >
-          Compliance{" "}
-          <span
-            className="italic text-accent-deep"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-          >
-            review queue.
-          </span>
-        </h1>
+        <div className="eyebrow mb-2">Review Queue</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Compliance review queue</h2>
         <p className="mt-6 text-[15px] leading-[1.7] text-muted">
           This is the firm-wide work list. Each item is a flagged review created
           automatically by the system — usually because a screening turned up a
@@ -91,10 +80,7 @@ export default async function TasksPage() {
       {/* ─── Empty state ──────────────────────────────────────────── */}
       {tasks.length === 0 && (
         <div className="surface px-12 py-16 text-center">
-          <div
-            className="font-display text-[64px] leading-none text-accent-deep mb-6"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300, fontStyle: "italic" }}
-          >
+          <div style={{ fontSize: "1.953rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 12 }}>
             All clear.
           </div>
           <p className="text-muted max-w-[44ch] mx-auto">

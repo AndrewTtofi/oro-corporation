@@ -96,12 +96,7 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-16 text-center">
-                    <p
-                      className="font-display italic text-[24px] text-muted mb-2"
-                      style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-                    >
-                      No submissions match.
-                    </p>
+                    <p className="mb-2" style={{ fontSize: "1.125rem", fontWeight: 600 }}>No submissions match.</p>
                     <p className="text-[13px] text-muted">
                       Try a different filter, or wait for the next application to arrive.
                     </p>

@@ -83,19 +83,9 @@ export function EditableClientHeader({
 
         <div className="min-w-0">
           <div className="eyebrow mb-3">Engagement</div>
-          <h1
-            className="font-display text-[clamp(36px,4vw,52px)] leading-[1.02] tracking-[-0.025em] text-ink"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60' }}
-          >
-            {name}
-          </h1>
+          <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>{name}</h2>
           {draft.companyName && (
-            <div
-              className="mt-1.5 font-display italic text-[22px] text-accent-deep"
-              style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-            >
-              {draft.companyName}
-            </div>
+            <div className="text-muted mt-1" style={{ fontSize: "0.9375rem" }}>{draft.companyName}</div>
           )}
 
           <dl className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-4">

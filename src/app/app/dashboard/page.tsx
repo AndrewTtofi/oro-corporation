@@ -177,34 +177,30 @@ function LegacyProspectDashboard({
         </div>
 
         <div className="flex flex-col gap-8">
-          <section className="rounded-card p-8 text-white" style={{ background: "var(--dark)", color: "var(--client-bg)" }}>
-            <h2 className="text-accent text-lg font-semibold">Expert Consultation</h2>
+          <section className="card">
+            <div className="card-title">Consultation</div>
             {isApproved ? (
               upcomingBooking ? (
-                <div className="mt-6">
-                  <p className="text-sm opacity-70 mb-3">Upcoming consultation</p>
-                  <div className="font-display text-2xl">
+                <>
+                  <p className="text-muted" style={{ fontSize: "0.875rem" }}>Upcoming consultation</p>
+                  <div className="mt-1" style={{ fontSize: "1.25rem", fontWeight: 600 }}>
                     {upcomingBooking.startsAt.toLocaleString("en-GB", { dateStyle: "long", timeStyle: "short" })}
                   </div>
-                  <p className="text-meta opacity-60 mt-1">with {upcomingBooking.expert.fullName}</p>
-                  <Link href="/app/booking" className="btn btn-accent mt-6 px-5 py-2.5">Manage booking</Link>
-                </div>
+                  <p className="text-muted mt-1" style={{ fontSize: "0.8125rem" }}>with {upcomingBooking.expert.fullName}</p>
+                  <Link href="/app/booking" className="btn btn-secondary btn-block mt-4">Manage booking</Link>
+                </>
               ) : (
                 <>
-                  <p className="text-meta opacity-70 mt-3 mb-6 leading-relaxed">
-                    Your application is approved. Book a free consultation with one of our experts.
-                  </p>
-                  <Link href="/app/booking" className="btn btn-accent px-5 py-2.5">Book consultation</Link>
+                  <p className="text-muted" style={{ fontSize: "0.875rem" }}>Your application is approved. Book a free consultation with an advisor.</p>
+                  <Link href="/app/booking" className="btn btn-primary btn-block mt-4">Book consultation →</Link>
                 </>
               )
             ) : (
               <>
-                <p className="text-meta opacity-70 mt-3 mb-6 leading-relaxed">
-                  Your consultation booking will become available once your application status changes to &ldquo;Approved&rdquo;.
-                </p>
-                <div className="rounded-elem p-6 text-center" style={{ border: "1px dashed rgba(200,164,90,0.3)" }}>
-                  <span className="block w-8 h-8 mx-auto mb-3 text-accent opacity-50">{LockIcon}</span>
-                  <div className="text-meta font-semibold uppercase tracking-widest text-accent">Locked</div>
+                <p className="text-muted" style={{ fontSize: "0.875rem" }}>Booking becomes available once your application is approved.</p>
+                <div className="note mt-4">
+                  <span className="w-4 h-4">{LockIcon}</span>
+                  <span>Locked until your application is approved.</span>
                 </div>
               </>
             )}
@@ -238,9 +234,9 @@ function TimelineItem({ done, active, title, body }: { done: boolean; active: bo
         className={`absolute left-[-32px] top-1 w-4 h-4 rounded-full border-2 z-10 ${active ? "animate-pulse-accent" : ""}`}
         style={
           done
-            ? { background: "var(--accent)", borderColor: "var(--accent)" }
+            ? { background: "var(--brand)", borderColor: "var(--brand)" }
             : active
-              ? { background: "var(--surface)", borderColor: "var(--accent)" }
+              ? { background: "var(--surface)", borderColor: "var(--brand)" }
               : { background: "var(--surface)", borderColor: "var(--border)" }
         }
       />
