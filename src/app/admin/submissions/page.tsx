@@ -38,20 +38,9 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
   return (
     <AdminShell active="submissions" search={{ placeholder: "Search reference, name, email…" }}>
       <div className="mb-12">
-        <div className="eyebrow eyebrow-line mb-5">Intake</div>
-        <h1
-          className="font-display text-[44px] leading-[1.05] tracking-[-0.025em] text-ink"
-          style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60' }}
-        >
-          Submissions{" "}
-          <span
-            className="italic text-accent-deep"
-            style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100, "WONK" 1', fontWeight: 300 }}
-          >
-            queue.
-          </span>
-        </h1>
-        <p className="mt-4 max-w-[60ch] text-[15px] leading-[1.7] text-muted">
+        <div className="eyebrow mb-2">Intake</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Submissions queue</h2>
+        <p className="mt-2 max-w-[60ch] text-muted" style={{ fontSize: "0.9375rem", lineHeight: 1.6 }}>
           Applications submitted by prospective clients via the onboarding wizard.
           Review the file, exchange messages, run compliance, and convert once
           approved.
