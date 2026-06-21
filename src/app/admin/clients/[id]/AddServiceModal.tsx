@@ -28,29 +28,47 @@ export function AddServiceModal({ clientId, taxonomy, partners }: {
     });
   }
 
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className="btn btn-primary px-3 py-1.5 text-meta">+ Add service</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="btn btn-primary btn-sm">+ Add service</button>;
 
   return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40"
-    >
-      <div className="bg-admin-surface p-6 rounded-card w-[480px] max-w-[90vw] flex flex-col gap-3">
-        <h3 className="font-display text-xl">Add service</h3>
-        <select name="serviceType" required className="input">
-          {taxonomy.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-        </select>
-        <select name="assignedPartnerId" defaultValue="" className="input">
-          <option value="">Unassigned</option>
-          {partners.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
-        </select>
-        <input name="startDate" type="date" className="input" />
-        <textarea name="notes" rows={2} placeholder="Notes (optional)" className="input" />
-        <div className="flex gap-2 justify-end">
-          <button type="button" onClick={() => setOpen(false)} className="btn px-4 py-2">Cancel</button>
-          <button type="submit" disabled={pending} className="btn btn-primary px-4 py-2">Add</button>
+    <div className="scrim" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <form
+        onSubmit={(e) => { e.preventDefault(); submit(new FormData(e.currentTarget)); }}
+        className="modal"
+        style={{ maxWidth: 480 }}
+      >
+        <div className="modal-head">
+          <h3>Add service</h3>
+          <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon">✕</button>
         </div>
-      </div>
-    </form>
+        <div className="modal-body">
+          <div className="field">
+            <label>Service type</label>
+            <select name="serviceType" required className="select">
+              {taxonomy.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Assigned partner</label>
+            <select name="assignedPartnerId" defaultValue="" className="select">
+              <option value="">Unassigned</option>
+              {partners.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Start date</label>
+            <input name="startDate" type="date" className="input" />
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Notes</label>
+            <textarea name="notes" rows={2} placeholder="Notes (optional)" className="textarea" />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button type="button" onClick={() => setOpen(false)} className="btn btn-secondary">Cancel</button>
+          <button type="submit" disabled={pending} className="btn btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
   );
 }

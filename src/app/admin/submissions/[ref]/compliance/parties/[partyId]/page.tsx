@@ -19,8 +19,9 @@ export default async function SubmissionPartyPage({ params }: { params: Promise<
   return (
     <AdminShell active="submissions">
       <div className="mb-6">
-        <h1 className="font-display text-2xl">{party.fullName}</h1>
-        <p className="text-meta text-admin-muted capitalize">{party.role.replace("_", " ")} · {party.type}</p>
+        <div className="eyebrow mb-2">Compliance</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>{party.fullName}</h2>
+        <p className="muted mt-1" style={{ textTransform: "capitalize" }}>{party.role.replace("_", " ")} · {party.type}</p>
       </div>
       <PartyWorkspace party={{
         id: party.id, fullName: party.fullName, role: party.role, type: party.type,

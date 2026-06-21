@@ -25,49 +25,46 @@ export default async function AdminUsersPage() {
 
   return (
     <AdminShell active="users">
-      <div className="mb-8">
-        <h1 className="font-display text-3xl flex items-center">
-          Users
-          <span className="ml-3 font-mono text-meta px-2 py-0.5 rounded border border-admin-border text-admin-muted bg-admin-bg">
-            {users.length}
-          </span>
-        </h1>
-        <p className="text-meta text-admin-muted mt-1">
+      <div className="mb-6">
+        <div className="eyebrow mb-2">Firm</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Users</h2>
+        <p className="muted mt-2" style={{ fontSize: "var(--fs-sm)" }}>
           {unverifiedCount > 0
             ? `${unverifiedCount} account${unverifiedCount === 1 ? "" : "s"} awaiting email verification.`
             : "All accounts have verified emails."}
         </p>
       </div>
 
-      <div className="bg-admin-surface border border-admin-border rounded-elem overflow-hidden">
-        <table className="w-full">
+      <div className="tbl-wrap">
+        <div className="tbl-toolbar"><strong>Users</strong><span className="muted right" style={{ fontSize: "var(--fs-xs)" }}>{users.length}</span></div>
+        <table className="tbl">
           <thead>
-            <tr style={{ background: "#FDFDFD" }}>
-              <Th>Name</Th>
-              <Th>Email</Th>
-              <Th>Role</Th>
-              <Th>Verified</Th>
-              <Th>Created</Th>
-              <Th>Action</Th>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Verified</th>
+              <th>Created</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t border-admin-border">
-                <Td><span className="font-semibold text-dark">{u.fullName}</span></Td>
-                <Td className="font-mono text-meta">{u.email}</Td>
-                <Td className="capitalize">{u.role}</Td>
-                <Td>
+              <tr key={u.id}>
+                <td><span style={{ fontWeight: 600 }}>{u.fullName}</span></td>
+                <td className="mono">{u.email}</td>
+                <td style={{ textTransform: "capitalize" }}>{u.role}</td>
+                <td>
                   {u.emailVerified ? (
                     <span className="badge badge-approved">Verified</span>
                   ) : (
                     <span className="badge badge-pending">Pending</span>
                   )}
-                </Td>
-                <Td className="font-mono text-meta text-admin-muted">
+                </td>
+                <td className="mono muted">
                   {u.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                </Td>
-                <Td>{u.emailVerified ? <span className="text-admin-muted text-meta">—</span> : <VerifyButton userId={u.id} />}</Td>
+                </td>
+                <td>{u.emailVerified ? <span className="muted">—</span> : <VerifyButton userId={u.id} />}</td>
               </tr>
             ))}
           </tbody>
@@ -75,11 +72,4 @@ export default async function AdminUsersPage() {
       </div>
     </AdminShell>
   );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="text-left p-4 text-[11px] uppercase tracking-widest text-admin-muted font-semibold">{children}</th>;
-}
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`p-4 align-middle text-meta ${className}`}>{children}</td>;
 }

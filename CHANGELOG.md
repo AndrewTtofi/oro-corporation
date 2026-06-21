@@ -10,6 +10,13 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — Unify all admin pages onto the prototype design system
+- Converted every remaining `/admin` page off the older "Quiet Authority" tokens (`font-display`, `text-ink`, `--admin-*`, bespoke `Th`/`Td` table helpers, `min-w-[1000px]`) onto the prototype component system (`.card`, `.tbl`/`.tbl-wrap`/`.tbl-toolbar`, `.chips`/`.chip`, `.badge*`, `.kpi-tile`, `.dl`, `.file-row`, `.scrim`/`.modal*`, `.field`/`.input`). The whole admin surface now shares one look.
+  - Lists/detail: clients (list + full client detail: header, tabs, key-dates, compliance bar, conversation, folders, modals), submissions (queue + detail + actions + party workspace), users, analytics (shared KPI tiles), messages, content editor.
+  - Settings: layout, chip-tab nav, and branding form.
+- Fixed the clients table clipping off-screen (removed the forced `min-w-[1000px]`; `.tbl-wrap` now scrolls). Restored content padding on the standalone submission-detail page (wrapped in `.appmain`).
+- Added the prototype `.file-row` styles to globals.css (the only class that was missing).
+
 ### Changed — Pricing page
 - Refreshed `/pricing` styling to the prototype's card layout (responsive `price-grid`, available/unavailable feature markers, "Most popular" highlight) while keeping the **firm's own service pricing** (Essentials / Standard / Full service, setup-fee + monthly retainer).
 - Note: the new prototype's pricing page sells the white-label *platform* to firms with a monthly/annual SaaS toggle. That model is intentionally **not** used in tenant builds — each deployment is white-labelled for one firm and must show that firm's service pricing to its clients, not the platform's subscription tiers. The platform toggle was therefore dropped from the app.

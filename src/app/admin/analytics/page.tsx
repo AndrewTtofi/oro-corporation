@@ -1,4 +1,5 @@
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Kpi } from "@/components/admin/Kpi";
 import { prisma } from "@/lib/db";
 import { ProspectStatus, BookingStatus } from "@prisma/client";
 
@@ -49,67 +50,61 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <AdminShell active="analytics">
-      <h1 className="text-2xl font-bold mb-2">Analytics</h1>
-      <p className="text-meta text-admin-muted mb-8">Headline metrics derived from the application database.</p>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-        <Kpi label="Submissions (all-time)" value={total} />
-        <Kpi label="Pending review" value={pending} accent />
-        <Kpi label="Approval rate" value={total ? `${Math.round((approved / total) * 100)}%` : "—"} />
-        <Kpi label="Rejections" value={rejected} />
-        <Kpi label="Consultations booked" value={bookingsTotal} />
-        <Kpi label="Completed" value={completed} />
-        <Kpi label="No-shows" value={noShows} />
-        <Kpi label="Avg time to consult." value={`${avgDays} d`} />
+      <div className="mb-6">
+        <div className="eyebrow mb-2">Firm</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Analytics</h2>
+        <p className="muted mt-2" style={{ fontSize: "var(--fs-sm)" }}>Headline metrics derived from the application database.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="bg-admin-surface border border-admin-border rounded-card p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-admin-muted mb-4">Submissions by service</h2>
-          {byService.length === 0 ? <p className="text-meta text-admin-muted">No data yet.</p> :
-            <ul className="flex flex-col gap-3">
+      <div className="grid grid-4 mb-6">
+        <Kpi label="Submissions (all-time)" value={total} icon="documents" />
+        <Kpi label="Pending review" value={pending} icon="flag" />
+        <Kpi label="Approval rate" value={total ? `${Math.round((approved / total) * 100)}%` : "—"} icon="check" />
+        <Kpi label="Rejections" value={rejected} icon="x" />
+        <Kpi label="Consultations booked" value={bookingsTotal} icon="calendar" />
+        <Kpi label="Completed" value={completed} icon="check" />
+        <Kpi label="No-shows" value={noShows} icon="flag" />
+        <Kpi label="Avg time to consult." value={`${avgDays} d`} icon="clock" />
+      </div>
+
+      <div className="grid grid-2">
+        <div className="card">
+          <h3 className="card-title">Submissions by service</h3>
+          {byService.length === 0 ? <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>No data yet.</p> :
+            <ul className="row" style={{ flexDirection: "column", gap: 12, alignItems: "stretch" }}>
               {byService.map(([service, count]) => {
                 const pct = total ? Math.round((count / total) * 100) : 0;
                 return (
                   <li key={service}>
-                    <div className="flex justify-between text-meta mb-1">
+                    <div className="row-between" style={{ fontSize: "var(--fs-sm)", marginBottom: 4 }}>
                       <span>{pretty(service)}</span>
-                      <span className="font-mono text-admin-muted">{count}</span>
+                      <span className="mono muted">{count}</span>
                     </div>
-                    <div className="h-2 rounded-full" style={{ background: "var(--bg)" }}>
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--accent)" }} />
+                    <div style={{ height: 8, borderRadius: 999, background: "var(--admin-border)" }}>
+                      <div style={{ height: "100%", borderRadius: 999, width: `${pct}%`, background: "var(--brand)" }} />
                     </div>
                   </li>
                 );
               })}
             </ul>
           }
-        </section>
+        </div>
 
-        <section className="bg-admin-surface border border-admin-border rounded-card p-6">
-          <h2 className="text-meta font-bold uppercase tracking-widest text-admin-muted mb-4">Top countries</h2>
-          {topCountries.length === 0 ? <p className="text-meta text-admin-muted">No data yet.</p> :
-            <ul className="flex flex-col gap-2">
+        <div className="card">
+          <h3 className="card-title">Top countries</h3>
+          {topCountries.length === 0 ? <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>No data yet.</p> :
+            <ul className="row" style={{ flexDirection: "column", gap: 8, alignItems: "stretch" }}>
               {topCountries.map(([country, count]) => (
-                <li key={country} className="flex justify-between text-meta">
+                <li key={country} className="row-between" style={{ fontSize: "var(--fs-sm)" }}>
                   <span>{country}</span>
-                  <span className="font-mono text-admin-muted">{count}</span>
+                  <span className="mono muted">{count}</span>
                 </li>
               ))}
             </ul>
           }
-        </section>
+        </div>
       </div>
     </AdminShell>
-  );
-}
-
-function Kpi({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
-  return (
-    <div className="bg-admin-surface border border-admin-border rounded-card p-5">
-      <div className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold">{label}</div>
-      <div className={`font-display text-3xl mt-2 ${accent ? "text-accent" : ""}`}>{value}</div>
-    </div>
   );
 }
 

@@ -62,30 +62,15 @@ export function EditableClientHeader({
   return (
     <section className="mb-10">
       <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-8 items-start">
-        <div className="relative">
-          <div
-            className="w-20 h-20 grid place-items-center font-mono text-[13px] tracking-[0.16em] uppercase"
-            style={{
-              background: "var(--ink)",
-              color: "var(--accent)",
-              borderRadius: "999px",
-              boxShadow: "0 0 0 1px rgba(176,141,62,0.5), 0 14px 32px -10px rgba(60,40,16,0.4)",
-            }}
-          >
-            {initials}
-          </div>
-          <div
-            aria-hidden
-            className="absolute inset-[-6px] rounded-full pointer-events-none"
-            style={{ boxShadow: "0 0 0 1px rgba(176,141,62,0.2)" }}
-          />
+        <div className="avatar" style={{ width: 80, height: 80, fontSize: "1.125rem" }}>
+          {initials}
         </div>
 
         <div className="min-w-0">
           <div className="eyebrow mb-3">Engagement</div>
           <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>{name}</h2>
           {draft.companyName && (
-            <div className="text-muted mt-1" style={{ fontSize: "0.9375rem" }}>{draft.companyName}</div>
+            <div className="muted mt-1" style={{ fontSize: "0.9375rem" }}>{draft.companyName}</div>
           )}
 
           <dl className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-4">
@@ -110,7 +95,7 @@ export function EditableClientHeader({
       <hr className="hairline-gold my-8" />
 
       {editing ? (
-        <div className="grid gap-5 md:grid-cols-2 surface p-7">
+        <div className="card grid gap-5 md:grid-cols-2">
           <FieldEdit label="Company name">
             <input value={draft.companyName ?? ""} onChange={(e) => setDraft({ ...draft, companyName: e.target.value || null })} className="input" />
           </FieldEdit>
@@ -175,16 +160,16 @@ function Fact({
   className?: string;
 }) {
   const valueNode = (
-    <span className={`block ${mono ? "font-mono figure" : "font-body"} text-[14px] text-ink leading-snug truncate`} title={value}>
+    <span className={`block ${mono ? "mono" : ""} truncate`} style={{ fontSize: "0.875rem", lineHeight: 1.4 }} title={value}>
       {value}
     </span>
   );
   return (
     <div className={className}>
-      <dt className="font-mono text-[9.5px] tracking-[0.24em] uppercase text-muted mb-1.5">
+      <dt className="eyebrow mb-1.5">
         {label}
       </dt>
-      <dd className="text-ink">
+      <dd style={{ margin: 0 }}>
         {href ? <a href={href} className="link-gold">{valueNode}</a> : valueNode}
       </dd>
     </div>
@@ -202,7 +187,7 @@ function FieldEdit({
 }) {
   return (
     <label className={`flex flex-col gap-2 ${className}`}>
-      <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">{label}</span>
+      <span className="eyebrow">{label}</span>
       {children}
     </label>
   );

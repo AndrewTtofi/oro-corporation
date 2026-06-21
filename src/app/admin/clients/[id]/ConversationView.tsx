@@ -25,20 +25,20 @@ export function ConversationView({
             <div className="eyebrow mb-3">Correspondence</div>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 600, letterSpacing: "-0.01em" }}>With {clientName}</h2>
           </div>
-          <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-muted">
+          <div className="muted mono" style={{ fontSize: "var(--fs-2xs)" }}>
             {messages.length} {messages.length === 1 ? "message" : "messages"}
           </div>
         </div>
 
         {/* Thread surface */}
         <div
-          className="surface px-8 py-10 max-h-[640px] overflow-y-auto flex flex-col gap-8"
+          className="card max-h-[640px] overflow-y-auto flex flex-col gap-8"
           style={{ scrollSnapType: "y proximity" }}
         >
           {messages.length === 0 && (
             <div className="text-center py-12">
               <div className="mb-3" style={{ fontSize: "1.25rem", fontWeight: 600 }}>No correspondence yet.</div>
-              <p className="text-muted text-[14px] max-w-[42ch] mx-auto">
+              <p className="muted text-[14px] max-w-[42ch] mx-auto">
                 Send the first message below. The client will receive it in
                 their portal and via email.
               </p>
@@ -64,28 +64,28 @@ export function ConversationView({
 
       {/* ── Sidebar — guidance ─────────────────────────────────── */}
       <aside className="hidden xl:block">
-        <div className="surface p-7">
+        <div className="card">
           <div className="eyebrow mb-4">About this thread</div>
-          <h3 className="font-display text-[20px] leading-tight text-ink mb-4">
+          <h3 className="card-title">
             One conversation per client.
           </h3>
-          <ul className="flex flex-col gap-4 text-[13px] text-muted leading-relaxed">
+          <ul className="flex flex-col gap-4 text-[13px] muted leading-relaxed">
             <li className="flex gap-3">
-              <span className="text-accent-deep mt-0.5">·</span>
+              <span className="mt-0.5" style={{ color: "var(--accent)" }}>·</span>
               <span>
                 The client sees every staff message in their portal and via
                 email.
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="text-accent-deep mt-0.5">·</span>
+              <span className="mt-0.5" style={{ color: "var(--accent)" }}>·</span>
               <span>
                 Internal notes are <em>not</em> visible to the client — those
                 live under Activity.
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="text-accent-deep mt-0.5">·</span>
+              <span className="mt-0.5" style={{ color: "var(--accent)" }}>·</span>
               <span>
                 Messages cannot be edited or deleted once sent.
               </span>
@@ -128,7 +128,7 @@ function Bubble({
       <div className="w-9 h-9 shrink-0">
         {!grouped && (
           <div
-            className="w-9 h-9 grid place-items-center font-mono text-[10px] tracking-[0.08em] uppercase"
+            className="w-9 h-9 grid place-items-center mono text-[10px] tracking-[0.08em] uppercase"
             style={{
               background: fromStaff ? "var(--brand)" : "var(--surface-2)",
               color: fromStaff ? "#fff" : "var(--fg)",
@@ -147,10 +147,10 @@ function Bubble({
       <div className={`max-w-[72%] flex flex-col ${fromStaff ? "items-end" : "items-start"}`}>
         {!grouped && (
           <div className="flex items-baseline gap-3 mb-1.5">
-            <span className="font-display text-[14px] tracking-[-0.005em] text-ink">
+            <span className="text-[14px] tracking-[-0.005em]" style={{ fontWeight: 600 }}>
               {message.sender.fullName}
             </span>
-            <span className="font-mono text-[9.5px] tracking-[0.16em] uppercase text-muted">
+            <span className="mono text-[9.5px] tracking-[0.16em] uppercase muted">
               {fromStaff ? "Counsel" : "Client"}
             </span>
           </div>
@@ -169,7 +169,7 @@ function Bubble({
         >
           {message.body}
         </div>
-        <div className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-muted mt-1.5 figure">
+        <div className="mono text-[9.5px] tracking-[0.14em] uppercase muted mt-1.5">
           {time}
         </div>
       </div>

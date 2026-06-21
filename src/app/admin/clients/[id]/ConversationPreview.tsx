@@ -20,29 +20,21 @@ export function ConversationPreview({
   const recent = [...messages].slice(-3).reverse();
 
   return (
-    <section className="surface p-7">
-      <header className="flex items-baseline justify-between mb-5">
+    <section className="card">
+      <header className="row-between mb-5" style={{ alignItems: "flex-start" }}>
         <div>
           <div className="eyebrow mb-2">Recent correspondence</div>
-          <h3 className="font-display text-[22px] leading-[1.2] tracking-[-0.015em] text-ink">
-            Conversation
-          </h3>
+          <h3 className="card-title" style={{ marginBottom: 0 }}>Conversation</h3>
         </div>
-        <Link
-          href={`?tab=conversation`}
-          className="font-mono text-[10px] tracking-[0.22em] uppercase text-accent-deep link-gold"
-        >
+        <Link href={`?tab=conversation`} className="link-gold eyebrow">
           Open thread →
         </Link>
       </header>
 
       {recent.length === 0 ? (
         <div className="py-8 text-center">
-          <p className="text-muted mb-2" style={{ fontSize: "0.9375rem" }}>No messages yet.</p>
-          <Link
-            href={`?tab=conversation`}
-            className="font-mono text-[10px] tracking-[0.22em] uppercase text-accent-deep link-gold"
-          >
+          <p className="muted mb-2" style={{ fontSize: "0.9375rem" }}>No messages yet.</p>
+          <Link href={`?tab=conversation`} className="link-gold eyebrow">
             Send the first message →
           </Link>
         </div>
@@ -58,25 +50,23 @@ export function ConversationPreview({
             });
             const isLast = i === recent.length - 1;
             return (
-              <li
-                key={m.id}
-                className={`py-4 ${isLast ? "" : "border-b border-token"}`}
-                style={isLast ? {} : { borderColor: "var(--admin-border)" }}
-              >
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="font-display text-[14px] tracking-[-0.005em] text-ink">
+              <li key={m.id} className="py-4" style={isLast ? {} : { borderBottom: "1px solid var(--border)" }}>
+                <div className="row gap-3 mb-2">
+                  <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>
                     {m.sender.fullName}
                   </span>
-                  <span className="font-mono text-[9.5px] tracking-[0.16em] uppercase text-muted">
+                  <span className="eyebrow">
                     {fromStaff ? "Counsel" : "Client"}
                   </span>
-                  <span className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-muted ml-auto figure">
+                  <span className="eyebrow mono" style={{ marginLeft: "auto" }}>
                     {time}
                   </span>
                 </div>
                 <p
-                  className="text-[14px] leading-[1.55] text-ink/85 line-clamp-2"
+                  className="muted"
                   style={{
+                    fontSize: "0.875rem",
+                    lineHeight: 1.55,
                     display: "-webkit-box",
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: "vertical",
@@ -92,10 +82,8 @@ export function ConversationPreview({
       )}
 
       {unreadCount && unreadCount > 0 && (
-        <div className="mt-5 pt-5 border-t border-token" style={{ borderColor: "var(--admin-border)" }}>
-          <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-oxblood">
-            {unreadCount} unread
-          </span>
+        <div className="mt-5 pt-5" style={{ borderTop: "1px solid var(--border)" }}>
+          <span className="badge badge-rejected">{unreadCount} unread</span>
         </div>
       )}
     </section>

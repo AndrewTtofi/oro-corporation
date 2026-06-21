@@ -410,6 +410,12 @@
   .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
   @media (max-width: 900px) { .price-grid { grid-template-columns: 1fr; } }
 
+  .file-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-top: 10px; }
+  .file-row .fic { width: 32px; height: 32px; border-radius: var(--radius-xs); background: var(--brand-50); color: var(--brand); display: grid; place-items: center; flex: none; }
+  .file-row .fname { font-size: 0.875rem; font-weight: 500; }
+  .file-row .fmeta { font-size: 0.6875rem; color: var(--muted); font-family: var(--font-mono); }
+  .file-row .fx { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
   .acc { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
   .acc-item { border-bottom: 1px solid var(--border); }
   .acc-item:last-child { border-bottom: 0; }

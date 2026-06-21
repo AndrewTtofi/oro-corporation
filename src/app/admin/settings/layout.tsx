@@ -7,9 +7,10 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   await requireSuperAdmin();
   return (
     <AdminShell active="settings">
-      <div className="mb-8">
-        <h1 className="font-display text-3xl">Settings</h1>
-        <p className="text-meta text-admin-muted mt-1">Organization-wide configuration.</p>
+      <div className="mb-6">
+        <div className="eyebrow mb-2">SETTINGS</div>
+        <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Settings</h2>
+        <p className="muted mt-1" style={{ fontSize: "var(--fs-sm)" }}>Organization-wide configuration.</p>
       </div>
       <SettingsNav />
       {children}

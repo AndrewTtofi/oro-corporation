@@ -99,7 +99,7 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
             <div className="help">Shown in the square logo mark. Defaults to the first letter of the brand name.</div>
           </div>
 
-          <hr style={{ border: 0, height: 1, background: "var(--admin-border)", margin: "var(--space-5) 0" }} />
+          <hr className="hairline" style={{ margin: "var(--space-5) 0" }} />
 
           <div className="field">
             <label>Theme preset</label>
@@ -184,9 +184,9 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
         </div>
       </div>
     </div>
-    <div className="row gap-3 mt-6" style={{ borderTop: "1px solid var(--admin-border)", paddingTop: "var(--space-5)" }}>
+    <div className="row gap-3 mt-6" style={{ borderTop: "1px solid var(--border)", paddingTop: "var(--space-5)" }}>
       <button type="button" disabled={pending} className="btn btn-primary" onClick={save}>{pending ? "Saving…" : canEditPlan ? "Save branding & plan" : "Save branding"}</button>
-      {msg && <span className="text-meta text-admin-muted">{msg}</span>}
+      {msg && <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>{msg}</span>}
     </div>
     </>
   );

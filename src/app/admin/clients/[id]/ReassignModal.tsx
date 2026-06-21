@@ -24,19 +24,27 @@ export function ReassignModal({ clientId, currentPrimaryId, staff }: {
     });
   }
 
-  if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-meta underline text-[12px]">Reassign primary staff</button>;
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="btn btn-ghost btn-sm">Reassign primary staff</button>;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
-      <div className="bg-admin-surface p-6 rounded-card w-[400px] max-w-[90vw] flex flex-col gap-3">
-        <h3 className="font-display text-xl">Reassign primary staff</h3>
-        <select value={pick} onChange={(e) => setPick(e.target.value)} className="input">
-          {staff.map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
-        </select>
-        <p className="text-[12px] text-admin-muted">To change assigned partners per service, edit them inline in the Services Engaged section.</p>
-        <div className="flex gap-2 justify-end">
-          <button type="button" onClick={() => setOpen(false)} className="btn px-4 py-2">Cancel</button>
-          <button type="button" onClick={save} disabled={pending} className="btn btn-primary px-4 py-2">Save</button>
+    <div className="scrim" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <div className="modal" style={{ maxWidth: 400 }}>
+        <div className="modal-head">
+          <h3>Reassign primary staff</h3>
+          <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon">✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Primary staff</label>
+            <select value={pick} onChange={(e) => setPick(e.target.value)} className="select">
+              {staff.map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
+            </select>
+          </div>
+          <p className="muted" style={{ fontSize: "0.75rem", marginBottom: 0 }}>To change assigned partners per service, edit them inline in the Services Engaged section.</p>
+        </div>
+        <div className="modal-foot">
+          <button type="button" onClick={() => setOpen(false)} className="btn btn-secondary">Cancel</button>
+          <button type="button" onClick={save} disabled={pending} className="btn btn-primary">Save</button>
         </div>
       </div>
     </div>

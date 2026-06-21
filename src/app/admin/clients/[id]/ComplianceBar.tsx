@@ -18,65 +18,35 @@ export function ComplianceBar({
     blocked: "Blocked",
   };
 
-  const statusTone: Record<string, string> = {
-    open: "#6E4F12",
-    in_review: "#2A3D49",
-    cleared: "#3A4D2A",
-    blocked: "#7A1F1F",
+  const statusBadge: Record<string, string> = {
+    open: "badge-pending",
+    in_review: "badge-info",
+    cleared: "badge-approved",
+    blocked: "badge-rejected",
   };
 
-  const riskTone: Record<string, string> = {
-    high: "#7A1F1F",
-    standard: "#8A6B26",
-    low: "#3A4D2A",
+  const riskBadge: Record<string, string> = {
+    high: "badge-rejected",
+    standard: "badge-pending",
+    low: "badge-approved",
   };
-
-  const tone = statusTone[status];
 
   return (
-    <section
-      className="mb-10 flex flex-wrap items-center gap-x-10 gap-y-3 px-6 py-4"
-      style={{
-        background: "var(--admin-surface)",
-        borderTop: "1px solid var(--admin-border)",
-        borderBottom: "1px solid var(--admin-border)",
-      }}
-    >
-      <div className="font-mono text-[10px] tracking-[0.24em] uppercase text-muted">
-        Compliance file
-      </div>
-
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className="w-2 h-2 rounded-full inline-block"
-          style={{ background: tone }}
-        />
-        <span
-          className="font-mono text-[11px] tracking-[0.14em] uppercase"
-          style={{ color: tone }}
-        >
-          {statusLabel[status]}
-        </span>
-      </div>
-
-      {riskRating && (
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] tracking-[0.24em] uppercase text-muted">
-            Risk
+    <section className="card row-between mb-10" style={{ flexWrap: "wrap", gap: "var(--space-4)" }}>
+      <div className="row gap-3" style={{ flexWrap: "wrap" }}>
+        <div className="eyebrow">Compliance file</div>
+        <span className={`badge ${statusBadge[status]}`}><span className="bdot" />{statusLabel[status]}</span>
+        {riskRating && (
+          <span className="row gap-2">
+            <span className="eyebrow">Risk</span>
+            <span className={`badge ${riskBadge[riskRating]}`}>{riskRating}</span>
           </span>
-          <span
-            className="font-mono text-[11px] tracking-[0.14em] uppercase"
-            style={{ color: riskTone[riskRating] }}
-          >
-            {riskRating}
-          </span>
-        </div>
-      )}
+        )}
+      </div>
 
       <Link
         href={`/admin/clients/${clientId}/compliance`}
-        className="ml-auto font-mono text-[10px] tracking-[0.22em] uppercase text-accent-deep link-gold"
+        className="btn btn-secondary btn-sm"
       >
         Open file →
       </Link>

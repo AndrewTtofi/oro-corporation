@@ -40,44 +40,43 @@ export function EditRequestModal({ id, description, dueAt, onClose }: EditReques
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-5 backdrop-blur-sm"
-      style={{ background: "rgba(0,0,0,0.5)" }}
+      className="scrim"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-admin-surface rounded-card w-full max-w-[480px] overflow-hidden">
-        <div className="px-6 py-5 border-b border-admin-border flex justify-between items-center">
-          <h3 className="font-display text-xl">Edit document request</h3>
-          <button type="button" onClick={onClose} className="text-admin-muted hover:text-admin-fg">✕</button>
+      <div className="modal" style={{ maxWidth: 480 }}>
+        <div className="modal-head">
+          <h3>Edit document request</h3>
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon">✕</button>
         </div>
-        <div className="p-6 flex flex-col gap-4">
-          <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold">Description</span>
+        <div className="modal-body">
+          <div className="field">
+            <label>Description</label>
             <textarea
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               rows={3}
-              className="input"
+              className="textarea"
               placeholder="What should the client upload?"
             />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold">Due date (optional)</span>
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Due date (optional)</label>
             <input
               type="date"
               value={due}
               onChange={(e) => setDue(e.target.value)}
               className="input"
             />
-          </label>
-          {error && <p className="text-[13px]" style={{ color: "#DC2626" }}>{error}</p>}
+          </div>
+          {error && <p className="note" style={{ color: "var(--danger)", marginTop: 12 }}>{error}</p>}
         </div>
-        <div className="px-6 py-4 border-t border-admin-border flex justify-end gap-3" style={{ background: "var(--bg)" }}>
-          <button type="button" onClick={onClose} className="btn btn-ghost px-5 py-2.5">Cancel</button>
+        <div className="modal-foot">
+          <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
           <button
             type="button"
             onClick={save}
             disabled={pending}
-            className="btn btn-primary px-5 py-2.5 disabled:opacity-50"
+            className="btn btn-primary"
           >
             {pending ? "Saving…" : "Save"}
           </button>
