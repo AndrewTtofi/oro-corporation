@@ -31,7 +31,7 @@ function rgb2hex(r: number, g: number, b: number) {
 }
 const isHex = (v: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
 
-export function BrandingForm({ initial }: { initial: Initial }) {
+export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEditPlan: boolean }) {
   const [brandName, setBrandName] = useState(initial.brandName);
   const [brandMark, setBrandMark] = useState(initial.brandMark);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
@@ -73,7 +73,8 @@ export function BrandingForm({ initial }: { initial: Initial }) {
           brandMark: brandMark.trim() || null,
           accentColor: isHex(accentColor) ? accentColor : "",
           themePreset,
-          planTier,
+          // Plan tier is operator-controlled — only sent by a super admin.
+          ...(canEditPlan ? { planTier } : {}),
         }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -83,6 +84,7 @@ export function BrandingForm({ initial }: { initial: Initial }) {
   }
 
   return (
+    <>
     <div className="twocol">
       <div>
         <div className="card mb-4">
@@ -96,6 +98,9 @@ export function BrandingForm({ initial }: { initial: Initial }) {
             <input className="input" maxLength={2} value={brandMark} onChange={(e) => setBrandMark(e.target.value)} placeholder={mark} style={{ maxWidth: 100 }} />
             <div className="help">Shown in the square logo mark. Defaults to the first letter of the brand name.</div>
           </div>
+
+          <hr className="hairline" style={{ margin: "var(--space-5) 0" }} />
+
           <div className="field">
             <label>Theme preset</label>
             <div className="row gap-2" style={{ flexWrap: "wrap" }}>
@@ -139,30 +144,50 @@ export function BrandingForm({ initial }: { initial: Initial }) {
 
       <div>
         <div className="card mb-4">
-          <h3 className="card-title">Plan tier</h3>
-          <p className="muted mb-4" style={{ fontSize: "var(--fs-xs)" }}>Switching tiers toggles feature availability (partner portal, white-label, AML, compliance calendar).</p>
-          <div className="stack gap-2">
-            {TIERS.map((t) => (
-              <div
-                key={t.key}
-                onClick={() => setPlanTier(t.key)}
-                className="card"
-                style={{ cursor: "pointer", padding: "var(--space-4)", borderColor: planTier === t.key ? "var(--brand)" : undefined, boxShadow: planTier === t.key ? "var(--shadow-sm)" : undefined }}
-              >
-                <div className="row-between">
-                  <strong>{t.label}</strong>
-                  {planTier === t.key && <span className="badge badge-approved"><span className="bdot" />Active</span>}
-                </div>
-                <p className="muted mt-2" style={{ fontSize: "var(--fs-xs)" }}>{t.desc}</p>
-              </div>
-            ))}
+          <div className="row-between mb-2">
+            <h3 className="card-title" style={{ marginBottom: 0 }}>Plan tier</h3>
+            {canEditPlan
+              ? <span className="badge badge-new"><span className="bdot" />Super admin</span>
+              : <span className="badge badge-neutral"><span className="bdot" />Read-only</span>}
           </div>
-        </div>
-        <div className="row gap-3">
-          <button type="button" disabled={pending} className="btn btn-primary" onClick={save}>{pending ? "Saving…" : "Save branding & plan"}</button>
-          {msg && <span className="text-meta text-admin-muted">{msg}</span>}
+          <p className="muted mb-4" style={{ fontSize: "var(--fs-xs)" }}>
+            {canEditPlan
+              ? "Switching tiers toggles feature availability (partner portal, compliance calendar, AML)."
+              : "Your plan is managed by your platform provider. Contact them to change it."}
+          </p>
+          <div className="stack gap-2">
+            {TIERS.map((t) => {
+              const active = planTier === t.key;
+              const dim = !canEditPlan && !active;
+              return (
+                <div
+                  key={t.key}
+                  onClick={canEditPlan ? () => setPlanTier(t.key) : undefined}
+                  className="card"
+                  style={{
+                    cursor: canEditPlan ? "pointer" : "default",
+                    padding: "var(--space-4)",
+                    borderColor: active ? "var(--brand)" : undefined,
+                    boxShadow: active ? "var(--shadow-sm)" : undefined,
+                    opacity: dim ? 0.55 : 1,
+                  }}
+                >
+                  <div className="row-between">
+                    <strong>{t.label}</strong>
+                    {active && <span className="badge badge-approved"><span className="bdot" />Active</span>}
+                  </div>
+                  <p className="muted mt-2" style={{ fontSize: "var(--fs-xs)" }}>{t.desc}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
+    <div className="row gap-3 mt-6" style={{ borderTop: "1px solid var(--border)", paddingTop: "var(--space-5)" }}>
+      <button type="button" disabled={pending} className="btn btn-primary" onClick={save}>{pending ? "Saving…" : canEditPlan ? "Save branding & plan" : "Save branding"}</button>
+      {msg && <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>{msg}</span>}
+    </div>
+    </>
   );
 }

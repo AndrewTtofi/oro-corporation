@@ -405,6 +405,16 @@
   .price-card ul { list-style: none; padding: 0; margin: 24px 0; }
   .price-card li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.875rem; padding: 7px 0; color: var(--fg); }
   .price-card li svg { color: var(--success); margin-top: 2px; flex: none; width: 18px; height: 18px; }
+  .price-card li.off { color: var(--muted); }
+  .price-card li.off svg { color: var(--border-strong-color); }
+  .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .price-grid { grid-template-columns: 1fr; } }
+
+  .file-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-top: 10px; }
+  .file-row .fic { width: 32px; height: 32px; border-radius: var(--radius-xs); background: var(--brand-50); color: var(--brand); display: grid; place-items: center; flex: none; }
+  .file-row .fname { font-size: 0.875rem; font-weight: 500; }
+  .file-row .fmeta { font-size: 0.6875rem; color: var(--muted); font-family: var(--font-mono); }
+  .file-row .fx { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
   .acc { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
   .acc-item { border-bottom: 1px solid var(--border); }
@@ -486,7 +496,7 @@
    ===================================================================== */
 
 /* icons rendered standalone (sized via descendant selectors elsewhere) */
-.ic { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; }
+.ic { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .ic-24 { width: 24px; height: 24px; }
 .ic-18 { width: 18px; height: 18px; }
 .ic-16 { width: 16px; height: 16px; }
@@ -560,3 +570,71 @@
 
 /* misc spacing helpers used by ported markup (Tailwind covers most mt-/mb-/gap-) */
 .mono { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Marketplace + modals (prototype (1) additions)
+   ===================================================================== */
+.dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 0.875rem; }
+.dl dt { color: var(--text-muted); }
+.dl dd { margin: 0; font-weight: 500; }
+
+.avatar-sq { border-radius: var(--radius-sm); }
+
+.toggle-group { display: inline-flex; border: 1px solid var(--border-strong-color); border-radius: var(--radius-sm); overflow: hidden; }
+.toggle-group button { background: var(--surface); border: 0; border-right: 1px solid var(--border-strong-color); padding: 9px 14px; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: var(--transition-colors); }
+.toggle-group button:last-child { border-right: 0; }
+.toggle-group button:hover { color: var(--text); background: var(--surface-2); }
+.toggle-group button.active { background: var(--brand); color: #fff; }
+.mkt-cats { flex-wrap: wrap; max-width: 100%; }
+
+.mkt-card { display: flex; flex-direction: column; height: 100%; }
+.mkt-grid { align-items: stretch; }
+
+.compare-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 120; background: var(--surface); border-top: 1px solid var(--border-color); box-shadow: 0 -4px 16px rgba(16,24,40,.08); padding: var(--space-4) 0; }
+
+/* modal */
+.scrim { position: fixed; inset: 0; background: var(--overlay-scrim); backdrop-filter: blur(2px); z-index: 1200; display: grid; place-items: center; padding: var(--space-6); animation: fade var(--dur-base); }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); max-width: 560px; width: 100%; max-height: 90vh; overflow: auto; animation: modalin var(--dur-slow) var(--ease-out); }
+@keyframes modalin { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-6); border-bottom: 1px solid var(--border-color); }
+.modal-head h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.01em; }
+.modal-body { padding: var(--space-6); }
+.modal-foot { display: flex; justify-content: flex-end; gap: 12px; padding: var(--space-5) var(--space-6); border-top: 1px solid var(--border-color); }
+.flabel { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+
+/* =====================================================================
+   AI Advisor + chat bubbles (prototype (1) additions)
+   ===================================================================== */
+.thread { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-2); }
+.bubble { max-width: 72%; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.875rem; line-height: 1.5; }
+.bubble.them { align-self: flex-start; background: var(--surface-2); color: var(--text); border-bottom-left-radius: 3px; }
+.bubble.me { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
+.composer { display: flex; gap: 10px; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-color); }
+.composer .input, .composer textarea { flex: 1; }
+.advisor-wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; }
+.advisor-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--border-color); margin-bottom: var(--space-4); }
+.advisor-thread { min-height: 46vh; max-height: calc(100vh - 240px); overflow: auto; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.advisor-chips { margin-top: var(--space-2); align-self: flex-start; }
+.advisor-composer { position: sticky; bottom: 0; background: var(--bg); padding: var(--space-3) 0 0; margin-top: var(--space-3); border-top: 1px solid var(--border-color); }
+.bubble.typing { display: inline-flex; gap: 5px; align-items: center; width: auto; }
+.bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: blink 1.2s infinite; }
+.bubble.typing span:nth-child(2) { animation-delay: .18s; }
+.bubble.typing span:nth-child(3) { animation-delay: .36s; }
+@keyframes blink { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+.advisor-rec { border-color: var(--brand); max-width: 520px; width: 100%; }
+.rec-svc { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.rec-jur { border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; background: var(--surface-2); }
+
+/* =====================================================================
+   Compliance suite (ownership tree, AI match cards, dropzone)
+   ===================================================================== */
+.onode-ic { width: 32px; height: 32px; border-radius: var(--radius-sm); display: grid; place-items: center; flex: none; }
+.onode-ic.person { background: var(--brand-50); color: var(--brand); }
+.onode-ic.entity { background: var(--surface-2); color: var(--text-muted); }
+.owner-children { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+.owner-node > .owner-children { margin-left: var(--space-6); padding-left: var(--space-4); border-left: 2px solid var(--border-color); }
+.owner-card { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--surface); }
+.ai-score { font-size: 1.953rem; font-weight: 700; line-height: 1; color: var(--brand); }
+.dropzone { border: 2px dashed var(--border-strong-color); border-radius: var(--radius-md); padding: var(--space-8); text-align: center; background: var(--surface-2); }
+.dropzone .dz-ic { width: 48px; height: 48px; border-radius: 50%; background: var(--brand-50); color: var(--brand); display: grid; place-items: center; margin: 0 auto var(--space-3); }

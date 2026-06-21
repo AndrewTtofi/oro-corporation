@@ -27,34 +27,36 @@ export function FolderSection({
   const defaultPurpose: "passport" | "proof_of_address" | "sof" | "other" = isKyc ? "passport" : "other";
 
   return (
-    <section id={id} className="bg-admin-surface border border-admin-border rounded-card p-6 mb-4 scroll-mt-24">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-lg">{label} <span className="text-meta text-admin-muted font-normal">({documents.length})</span></h3>
+    <section id={id} className="card mb-4 scroll-mt-24">
+      <div className="row-between mb-3">
+        <h3 className="card-title" style={{ marginBottom: 0 }}>{label} <span className="muted" style={{ fontWeight: 400 }}>({documents.length})</span></h3>
         <UploadButton clientId={clientId} serviceTypeKey={serviceTypeKey} defaultPurpose={defaultPurpose} />
       </div>
 
-      {documents.length === 0 ? <p className="text-meta text-admin-muted">No documents yet.</p> : (
-        <table className="w-full">
-          <thead>
-            <tr style={{ background: "#FDFDFD" }}>
-              <Th>Name</Th><Th>Type</Th><Th>Size</Th><Th>Uploaded</Th><Th>Status</Th><Th>{""}</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((d) => <DocumentRow key={d.id} doc={d} />)}
-          </tbody>
-        </table>
+      {documents.length === 0 ? <p className="muted" style={{ fontSize: "0.875rem" }}>No documents yet.</p> : (
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Name</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {documents.map((d) => <DocumentRow key={d.id} doc={d} />)}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {openRequests.length > 0 && (
-        <div className="mt-4 border-t border-admin-border pt-4">
-          <div className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold mb-2">Open requests</div>
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <div className="eyebrow mb-2">Open requests</div>
           <ul className="flex flex-col gap-2">
             {openRequests.map((r) => (
-              <li key={r.id} className="flex justify-between items-center text-meta">
+              <li key={r.id} className="row-between" style={{ fontSize: "0.875rem" }}>
                 <span>
                   {r.description}
-                  {r.dueAt && <span className="ml-2 font-mono text-[12px] text-admin-muted">due {new Date(r.dueAt).toLocaleDateString()}</span>}
+                  {r.dueAt && <span className="ml-2 mono muted" style={{ fontSize: "0.75rem" }}>due {new Date(r.dueAt).toLocaleDateString()}</span>}
                 </span>
                 <CancelRequestClient id={r.id} />
               </li>
@@ -64,8 +66,4 @@ export function FolderSection({
       )}
     </section>
   );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return <th className="text-left p-2 text-[11px] uppercase tracking-widest text-admin-muted font-semibold">{children}</th>;
 }

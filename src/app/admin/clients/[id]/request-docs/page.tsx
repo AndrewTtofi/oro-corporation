@@ -22,32 +22,36 @@ export default async function RequestDocsPage({ params }: { params: Promise<{ id
   return (
     <AdminClientShell breadcrumb={`${client.user.fullName} · Request docs`}>
       <div className="max-w-[800px]">
-        <h1 className="font-display text-2xl mb-6">Request documents from {client.user.fullName}</h1>
+        <div className="eyebrow mb-2">Compliance</div>
+        <h1 className="mb-6" style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Request documents from {client.user.fullName}</h1>
         <RequestForm clientId={id} taxonomy={taxonomy} />
 
-        <h2 className="font-display text-xl mt-10 mb-4">History</h2>
-        <div className="bg-admin-surface border border-admin-border rounded-card p-4">
-          <ul className="flex flex-col gap-3">
-            {client.documentRequests.length === 0 && <p className="text-meta text-admin-muted">No requests yet.</p>}
-            {client.documentRequests.map((r) => (
-              <li key={r.id} className="flex justify-between items-start">
-                <div>
-                  <div className="font-semibold text-meta">{r.description}</div>
-                  <div className="text-[12px] text-admin-muted">
-                    {r.serviceTypeKey ? `Service: ${r.serviceTypeKey} · ` : ""}
-                    {r.dueAt ? `Due ${new Date(r.dueAt).toLocaleDateString()} · ` : ""}
-                    State: <span className="font-mono">{r.state}</span>
+        <h2 className="card-title mt-10">History</h2>
+        <div className="card">
+          {client.documentRequests.length === 0 ? (
+            <div className="empty"><h3>No requests yet</h3><p>Document requests you send appear here.</p></div>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {client.documentRequests.map((r) => (
+                <li key={r.id} className="row-between" style={{ alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: "var(--fs-sm)" }}>{r.description}</div>
+                    <div className="muted" style={{ fontSize: "0.75rem" }}>
+                      {r.serviceTypeKey ? `Service: ${r.serviceTypeKey} · ` : ""}
+                      {r.dueAt ? `Due ${new Date(r.dueAt).toLocaleDateString()} · ` : ""}
+                      State: <span className={`badge ${r.state === "open" ? "badge-pending" : "badge-neutral"}`}>{r.state}</span>
+                    </div>
                   </div>
-                </div>
-                {r.state === "open" && (
-                  <div className="flex gap-1 items-center shrink-0">
-                    <EditRequestClient id={r.id} description={r.description} dueAt={r.dueAt?.toISOString() ?? null} />
-                    <CancelRequestClient id={r.id} />
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                  {r.state === "open" && (
+                    <div className="row gap-2 shrink-0">
+                      <EditRequestClient id={r.id} description={r.description} dueAt={r.dueAt?.toISOString() ?? null} />
+                      <CancelRequestClient id={r.id} />
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </AdminClientShell>

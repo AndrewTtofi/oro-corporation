@@ -440,6 +440,20 @@ model Lead {
   @@index([createdAt])
 }
 
+/// Marketplace partner application — a client applying to a vetted provider.
+model Application {
+  id           String   @id @default(uuid())
+  userId       String   // the applicant (client/prospect user)
+  providerId   String
+  providerName String
+  category     String
+  status       String   @default("sent") // sent | review | approved
+  responseBy   String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 /// Editable marketing-site content (landing + FAQ copy). Singleton JSON blob,
 /// merged over code defaults so new fields degrade gracefully.
 model SiteContent {

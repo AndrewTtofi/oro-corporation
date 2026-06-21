@@ -10,6 +10,62 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — Unify all admin pages onto the prototype design system
+- Converted every remaining `/admin` page off the older "Quiet Authority" tokens (`font-display`, `text-ink`, `--admin-*`, bespoke `Th`/`Td` table helpers, `min-w-[1000px]`) onto the prototype component system (`.card`, `.tbl`/`.tbl-wrap`/`.tbl-toolbar`, `.chips`/`.chip`, `.badge*`, `.kpi-tile`, `.dl`, `.file-row`, `.scrim`/`.modal*`, `.field`/`.input`). The whole admin surface now shares one look.
+  - Lists/detail: clients (list + full client detail: header, tabs, key-dates, compliance bar, conversation, folders, modals), submissions (queue + detail + actions + party workspace), users, analytics (shared KPI tiles), messages, content editor.
+  - Settings: layout, chip-tab nav, and branding form.
+- Fixed the clients table clipping off-screen (removed the forced `min-w-[1000px]`; `.tbl-wrap` now scrolls). Restored content padding on the standalone submission-detail page (wrapped in `.appmain`).
+- Added the prototype `.file-row` styles to globals.css (the only class that was missing).
+
+### Changed — Pricing page
+- Refreshed `/pricing` styling to the prototype's card layout (responsive `price-grid`, available/unavailable feature markers, "Most popular" highlight) while keeping the **firm's own service pricing** (Essentials / Standard / Full service, setup-fee + monthly retainer).
+- Note: the new prototype's pricing page sells the white-label *platform* to firms with a monthly/annual SaaS toggle. That model is intentionally **not** used in tenant builds — each deployment is white-labelled for one firm and must show that firm's service pricing to its clients, not the platform's subscription tiers. The platform toggle was therefore dropped from the app.
+
+### Added — Compliance suite (new prototype)
+- New **Compliance hub** (`/admin/compliance`): KPI tiles (active onboardings, KYC pending, AML flags, UBOs), a suite grid linking the eight tools, a "cases needing attention" table and a compliance-posture summary (applicants screened, raw vendor hits, true matches, structures mapped, overdue obligations). Wired to live prospects.
+- Six new compliance tools, each built on deterministic intelligence derived from real prospects (`src/lib/services/compliance-intel.ts`) and gated by plan tier:
+  - **KYC / ID verification** (`/admin/compliance/kyc`) — document + biometric liveness/face-match results per applicant (Scale).
+  - **KYB verification** (`/admin/compliance/kyb`) — registry records for corporate applicants: legal status, type, directors, filings, with a link to the ownership map (Scale).
+  - **AI screening** (`/admin/compliance/ai-screening`) — collapses raw sanctions/PEP/adverse-media hits into true matches, showing the noise-reduction (Scale).
+  - **Ownership map** (`/admin/compliance/ownership`) — recursive UBO tree with effective-ownership math (multiplied down the tree) and ≥25% UBO flagging (Scale).
+  - **Client risk** (`/admin/compliance/risk`) — 0–100 risk scoring across the portfolio with driver breakdown (Scale).
+  - **AML reporting** (`/admin/compliance/reporting`) — SAR/STR, periodic-review and UBO-confirmation report templates plus a recent-reports log (Scale).
+- New **Documents & e-sign** (`/admin/documents`, Professional): firm-wide document library with version history, expiry tracking, e-signature templates and a dropzone. New **Connect & API** (`/admin/integrations`, Scale): connected-services grid, webhooks table and branded API keys.
+- Provider-side actions that require live third-party wiring (generate report, refresh from registry, connect/regenerate keys, send for signature, upload) are labelled **coming soon**; the UI mirrors the prototype exactly.
+- Rebuilt the admin sidebar to the full prototype IA (Overview / Compliance / Relationships / Engagement / Firm / Configure), persona- and tier-aware.
+
+### Added — AI Advisor (new prototype)
+- `/advisor`: a conversational AI advisor (free, no sign-up) that matches a free-text need to a recommendation. Keyword intent tree (`src/lib/data/advisor.ts`) with clarify chips and branch routing; renders a recommendation card (service(s) + primary jurisdiction with corp/VAT/formation stats + "also strong" alternatives) and CTAs (Start application, See matching providers, Compare jurisdictions). Added "Advisor" (AI badge) to the public nav.
+- Shared `Icon` component (`src/components/Icon.tsx`, full prototype icon set) and `services` data module for reuse across the new features.
+
+
+### Added — Partner-network marketplace (new prototype)
+- Marketplace of 20 vetted partners (banks/EMIs, corporate services, advisory, licensing) for visitors and clients: category tabs, search, jurisdiction/industry/speed filters, remote toggle, sort, grid/list views, provider detail modal, compare (up to 3) modal, and concierge. `/marketplace` (public) + `/app/marketplace` (client).
+- "Get started" applies to a partner (persisted via new `Application` model + `POST /api/applications`); clients track them under **My applications** (`/app/applications`). Reuses the verified KYC profile messaging.
+- Nav: "Partner network" in the public nav; "Network" group (Partner network + My applications) in the client sidebar.
+
+
+### Added — Super-admin provisioning via GitHub secrets → .env
+- The platform super-admin is now configured entirely through GitHub secrets and injected into the prod box at deploy time (no hand-editing the box):
+  - `SUPER_ADMIN_EMAILS` and `SUPER_ADMIN_PASSWORD` are passed from secrets through `deploy.yml` (over SSH) and written into `/opt/oro/.env` by `deploy/deploy-oro.sh` (idempotent `upsert_env`).
+  - New idempotent `src/worker/ensure-super-admin.ts` (compiled to `dist-worker`) runs every deploy and upserts each `SUPER_ADMIN_EMAILS` entry as a verified `staff` user (password from `SUPER_ADMIN_PASSWORD` on first create; existing accounts promoted to staff without password reset).
+- Configured `ttofisandreas@gmail.com` as the production super admin.
+
+### Added / Changed — Align admin to the platform prototype
+- New **admin Dashboard** landing (`/admin`) with KPI tiles, a recent-submissions table and a recent-activity feed (was a redirect to the submissions queue).
+- New **unified Messages inbox** (`/admin/messages`): a 2-pane thread list + conversation (reuses the client-detail `ConversationView`, replies via the existing messages API).
+- **AML / KYC screening panel inline** on the submission detail (Scale-gated; shows a locked note below Scale), plus a **Regenerate** control on the AI brief.
+- **Client-facing brief-completeness meter** in the onboarding header, computed live from the draft.
+- Reorganised the admin sidebar (Overview / Relationships / Compliance / Firm) and **removed the Compliance *tasks* queue** UI section (`/admin/compliance/tasks`); the ReviewTask model, API route and worker jobs are unchanged.
+- Note: the prototype's pricing monthly/annual toggle was intentionally not ported — the public pricing page reflects the firm's setup-fee + retainer model, where a billing-period toggle doesn't apply.
+
+### Added — Two admin personas (platform admin vs staff admin)
+- Split the admin surface into two personas, both on the `staff` DB role, distinguished by the `SUPER_ADMIN_EMAILS` env allowlist (set by the platform operator at deploy time):
+  - **Platform admin** (super admin, the code owner) sees **only** the Settings area (`/admin/settings/*` — branding, plan, services, team, flags).
+  - **Staff admin** (everyone else) sees **everything except** Settings.
+- Enforced in `middleware.ts` by path: a super admin hitting any non-settings `/admin` route is redirected to `/admin/settings`; a staff admin hitting settings is redirected to `/admin`. The settings layout also guards with `requireSuperAdmin()`, and `PATCH /api/admin/settings/org` rejects plan-tier changes from non-super-admins (403). The admin sidebar shows each persona only its own nav.
+- The plan tier is therefore operator-controlled and edited in **Settings → Branding & plan** (prototype tier-card UI). Helpers `isSuperAdmin()` / `currentIsSuperAdmin()` / `requireSuperAdmin()` in `src/lib/auth/guards.ts`; JWT now carries `email` for the middleware check.
+
 ### Changed — Repository renamed to `fiduciary-software`
 - Renamed the GitHub repo `oro-corporation` → `fiduciary-software`. CI derives the GHCR image path from the repo name automatically; updated the one hardcoded image reference in `deploy/deploy-oro.sh` to `ghcr.io/andrewttofi/fiduciary-software:latest` so deploys keep matching the freshly-built image. Updated clone/wiki URLs in the README and getting-started docs. GitHub redirects keep old URLs working.
 

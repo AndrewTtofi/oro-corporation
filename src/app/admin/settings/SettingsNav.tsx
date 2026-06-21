@@ -14,16 +14,14 @@ const TABS = [
 export function SettingsNav() {
   const path = usePathname();
   return (
-    <nav className="flex gap-6 border-b border-admin-border mb-8">
+    <nav className="chips mb-6">
       {TABS.map((t) => {
         const active = path === t.href;
         return (
           <Link
             key={t.href}
             href={t.href}
-            className={`pb-3 text-meta font-semibold border-b-2 -mb-px ${
-              active ? "text-dark border-accent" : "text-admin-muted border-transparent hover:text-dark"
-            }`}
+            className={`chip${active ? " active" : ""}`}
           >
             {t.label}
           </Link>

@@ -4,7 +4,11 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/guards";
 import { SubmissionActions } from "./SubmissionActions";
 import { CompletenessChip } from "@/components/admin/CompletenessChip";
+import { Icon } from "@/components/Icon";
 import { computeCompleteness, generateBrief, detailsToMap, type Completeness } from "@/lib/services/prospect-intel";
+import { getBranding, tierAtLeast } from "@/lib/services/branding";
+import { amlResult } from "@/lib/services/aml";
+import { RegenerateBriefButton } from "./RegenerateBriefButton";
 import { Role } from "@prisma/client";
 
 export const metadata = { title: "Submission" };
@@ -36,6 +40,11 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const effectiveCompleteness = (prospect.completenessOverride as Completeness | null) ?? autoCompleteness;
   const brief = generateBrief({ fullName: map.fullLegalName ?? prospect.user.fullName, services, answers, docCount });
 
+  // AML screening (Scale-gated) shown inline on the file.
+  const { planTier } = await getBranding();
+  const amlEnabled = tierAtLeast(planTier, "scale");
+  const aml = amlEnabled ? amlResult(prospect.referenceNumber) : null;
+
   const activity = await prisma.activityLog.findMany({
     where: { entityType: "prospect", entityId: prospect.id },
     orderBy: { createdAt: "desc" },
@@ -45,60 +54,97 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
   return (
     <div className="shell-admin min-h-screen">
-      <header className="h-16 bg-admin-surface border-b border-admin-border flex items-center justify-between px-8 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/submissions" className="px-3 py-1.5 rounded-inner border border-admin-border text-meta text-admin-fg font-medium">
-            ← Back
-          </Link>
-          <span className="font-bold font-mono">{prospect.referenceNumber}</span>
+      <div className="appmain">
+      <div className="page-head">
+        <Link className="muted" href="/admin/submissions" style={{ fontSize: "var(--fs-xs)" }}>
+          ← Back to queue
+        </Link>
+        <div className="row-between mt-2">
+          <div>
+            <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>{prospect.user.fullName}</h2>
+            <p className="mono muted mt-1" style={{ fontSize: "var(--fs-xs)" }}>
+              {prospect.referenceNumber}
+              {" · "}
+              Submitted {prospect.createdAt.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
+            </p>
+          </div>
           <span className={`badge ${statusClass(prospect.status)}`}>{prettyStatus(prospect.status)}</span>
         </div>
-        <div className="text-meta text-admin-muted">
-          Submitted {prospect.createdAt.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}
-        </div>
-      </header>
+      </div>
 
-      <main className="max-w-[1200px] mx-auto px-10 my-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-        <div className="flex flex-col gap-8">
-          <section className="bg-admin-surface border border-admin-border rounded-elem p-8" style={{ borderColor: "var(--brand)" }}>
-            <div className="flex items-center justify-between mb-4 gap-4">
-              <div className="flex items-center gap-3">
-                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" /></svg>
-                <h2 className="text-lg font-bold">AI-generated internal brief</h2>
+      <div className="twocol">
+        <div>
+          <section className="card mb-4" style={{ borderColor: "var(--brand)" }}>
+            <div className="row-between mb-3" style={{ alignItems: "flex-start", gap: 16 }}>
+              <div className="row gap-3" style={{ alignItems: "center" }}>
+                <Icon name="sparkles" />
+                <h3 style={{ fontWeight: 600 }}>AI-generated internal brief</h3>
               </div>
-              <CompletenessChip value={effectiveCompleteness} />
+              <div className="row gap-3" style={{ alignItems: "center" }}>
+                <CompletenessChip value={effectiveCompleteness} />
+                <RegenerateBriefButton />
+              </div>
             </div>
-            <p style={{ fontSize: "0.9375rem", lineHeight: 1.6 }}>{brief}</p>
-            <hr className="hairline" style={{ margin: "16px 0" }} />
-            <p className="text-[12px] text-admin-muted">
+            <p style={{ fontSize: "var(--fs-sm)", lineHeight: 1.6 }}>{brief}</p>
+            <div className="hr" />
+            <p className="muted" style={{ fontSize: "var(--fs-xs)" }}>
               Auto-drafted from the applicant&apos;s intake answers and documents on file. Adjust the brief-completeness score in the sidebar to reprioritise prep.
             </p>
           </section>
 
+          {/* ── AML / KYC screening (Scale plan) ──────────────────────── */}
+          <section className="card mb-4">
+            <div className="row-between mb-4" style={{ alignItems: "center", gap: 16 }}>
+              <div className="row gap-3" style={{ alignItems: "center" }}>
+                <Icon name="shield" />
+                <h3 style={{ fontWeight: 600 }}>AML / KYC screening</h3>
+              </div>
+              {aml && <span className={`badge ${aml.risk === "low" ? "badge-approved" : aml.risk === "medium" ? "badge-pending" : "badge-danger"}`}>{aml.risk} risk</span>}
+            </div>
+            {aml ? (
+              <div className="grid grid-3" style={{ gap: 10 }}>
+                {([["Sanctions", aml.sanctions], ["PEP", aml.pep], ["Adverse media", aml.adverse]] as const).map(([label, v]) => (
+                  <div key={label} className="card" style={{ padding: 12 }}>
+                    <div className="muted" style={{ fontSize: "var(--fs-2xs)", textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</div>
+                    <div className="mt-2">
+                      <span className={`badge ${v === "clear" ? "badge-approved" : v === "match" ? "badge-pending" : "badge-danger"}`}>
+                        {v === "clear" ? "Clear" : v === "match" ? "PEP match" : "Adverse"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>
+                Sanctions, PEP and adverse-media screening is a <strong>Scale</strong>-plan feature. Ask your platform admin to enable it.
+              </p>
+            )}
+          </section>
+
           <Card title="Personal Information">
-            <Grid2>
+            <dl className="dl">
               <Row label="Full Legal Name" value={map.fullLegalName ?? prospect.user.fullName} />
               <Row label="Email" value={prospect.user.email} />
               <Row label="Nationality" value={map.nationality} />
               <Row label="Residence" value={map.residenceCountry} />
               <Row label="Date of Birth" value={map.dateOfBirth?.slice(0, 10)} />
               <Row label="Phone" value={prospect.user.phone ?? "—"} />
-            </Grid2>
-            <Row label="Address" value={map.address} multiline />
+              <Row label="Address" value={map.address} />
+            </dl>
           </Card>
 
           <Card title="Business Intent">
-            <Row label="Activity Description" value={map.businessDescription} multiline />
-            <Grid2>
+            <dl className="dl">
+              <Row label="Activity Description" value={map.businessDescription} />
               <Row label="Expected Turnover" value={map.expectedTurnover} />
               <Row label="Timeline" value={pretty(map.timeline)} />
               <Row label="Source" value={pretty(map.source)} />
               <Row label="Services" value={services.map(pretty).join(", ")} />
-            </Grid2>
+            </dl>
           </Card>
 
           <Card title="Service Specifics">
-            <Grid2>
+            <dl className="dl">
               <Row label="Proposed company name" value={map.proposedCompanyName} />
               <Row label="Business activity" value={map.businessActivity} />
               <Row label="Shareholders" value={map.shareholderCount} />
@@ -111,33 +157,37 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
               <Row label="License type" value={map.licenseType} />
               <Row label="Account purpose" value={map.accountPurpose} />
               <Row label="Monthly tx volume" value={map.monthlyTxVolume} />
-            </Grid2>
+            </dl>
           </Card>
 
           <Card title="Uploaded Documents">
             {prospect.documents.length === 0 ? (
-              <p className="text-meta text-admin-muted">No documents uploaded.</p>
+              <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>No documents uploaded.</p>
             ) : (
-              <ul className="flex flex-col gap-2">
-                {prospect.documents.map((d) => (
-                  <li key={d.id}>
-                    <a href={`/api/documents/${d.id}`} target="_blank" rel="noreferrer"
-                       className="flex items-center gap-3 p-3 rounded-inner text-meta border border-admin-border hover:border-accent hover:bg-admin-bg">
-                      <svg width={20} height={20} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <span className="font-medium flex-1 truncate">{d.originalName}</span>
-                      <span className="text-[12px] text-admin-muted">{formatSize(d.sizeBytes)}</span>
-                      <span className={`badge ${docStatusClass(d.status)}`}>{prettyDocStatus(d.status)}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              prospect.documents.map((d) => (
+                <a
+                  key={d.id}
+                  href={`/api/documents/${d.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="file-row"
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <div className="fic"><Icon name="documents" className="ic-16" /></div>
+                  <div>
+                    <div className="fname">{d.originalName}</div>
+                    <div className="fmeta">{formatSize(d.sizeBytes)}</div>
+                  </div>
+                  <div className="fx">
+                    <span className={`badge ${docStatusClass(d.status)}`}>{prettyDocStatus(d.status)}</span>
+                  </div>
+                </a>
+              ))
             )}
           </Card>
         </div>
 
-        <aside className="lg:sticky lg:top-24 self-start">
+        <div>
           <SubmissionActions
             prospect={{ id: prospect.id, status: prospect.status, referenceNumber: prospect.referenceNumber }}
             partners={partners}
@@ -157,33 +207,30 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
               createdAt: a.createdAt.toISOString(),
             }))}
           />
-        </aside>
-      </main>
+        </div>
+      </div>
+      </div>
     </div>
   );
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-admin-surface border border-admin-border rounded-elem p-8">
-      <h2 className="text-lg font-bold mb-6">{title}</h2>
-      <div className="flex flex-col gap-6">{children}</div>
+    <section className="card mb-4">
+      <h3 className="card-title">{title}</h3>
+      {children}
     </section>
   );
 }
 
-function Grid2({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-6 sm:grid-cols-2">{children}</div>;
-}
-
-function Row({ label, value, multiline }: { label: string; value?: string | number | boolean | null; multiline?: boolean }) {
+function Row({ label, value }: { label: string; value?: string | number | boolean | null }) {
   if (value === undefined || value === null || value === "") return null;
   const str = typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
   return (
-    <div>
-      <div className="text-[11px] uppercase tracking-widest text-admin-muted mb-1 font-semibold">{label}</div>
-      <div className={`text-meta font-medium ${multiline ? "leading-relaxed" : ""}`}>{str}</div>
-    </div>
+    <>
+      <dt>{label}</dt>
+      <dd>{str}</dd>
+    </>
   );
 }
 

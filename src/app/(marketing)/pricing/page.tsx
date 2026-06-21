@@ -1,14 +1,9 @@
 import Link from "next/link";
 import { TopNav } from "@/components/marketing/TopNav";
 import { Footer } from "@/components/marketing/Footer";
+import { Icon } from "@/components/Icon";
 
 export const metadata = { title: "Pricing" };
-
-const Check = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M20 6 9 17l-5-5" />
-  </svg>
-);
 
 type Plan = {
   tier: string;
@@ -71,24 +66,22 @@ export default function PricingPage() {
       <main>
         <section className="section">
           <div className="mx-auto max-w-[1200px]">
-            <div className="sec-head text-center mx-auto" style={{ maxWidth: "62ch" }}>
+            <div className="sec-head text-center mx-auto" style={{ maxWidth: "62ch", margin: "0 auto var(--space-10)" }}>
               <div className="eyebrow">PRICING</div>
               <h2>One firm. Priced to replace four.</h2>
               <p>Every engagement is delivered fully managed, with a dedicated advisor and complete visibility. No setup headaches.</p>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3 items-start mt-10">
+            <div className="price-grid">
               {PLANS.map((p) => (
                 <div key={p.tier} className={`price-card${p.feat ? " feat" : ""}`}>
                   <div className="tier">{p.tier}</div>
-                  <div className="amt">{p.amount} <span>{p.unit}</span></div>
+                  <div className="amt mono">{p.amount} <span>{p.unit}</span></div>
                   <ul>
                     {p.features.map(([on, label]) => (
-                      <li key={label} style={on ? undefined : { color: "var(--muted)" }}>
-                        <span style={{ width: 18, height: 18, flex: "none", marginTop: 2, color: on ? "var(--success)" : "var(--border-strong)" }}>
-                          <Check />
-                        </span>
-                        {label}
+                      <li key={label} className={on ? undefined : "off"}>
+                        <Icon name={on ? "check" : "x"} className="ic-16" />
+                        <span>{label}</span>
                       </li>
                     ))}
                   </ul>

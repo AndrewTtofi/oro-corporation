@@ -40,6 +40,24 @@ export async function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL("/404", req.url));
   }
 
+  // Two kinds of admin within the staff role:
+  //   • super admin (the platform/code owner, by SUPER_ADMIN_EMAILS) → ONLY /admin/settings
+  //   • staff admin (everyone else)                                  → everything EXCEPT settings
+  if (guard.prefix === "/admin") {
+    const email = String(token.email ?? "").toLowerCase();
+    const allow = (process.env.SUPER_ADMIN_EMAILS ?? "")
+      .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const superAdmin = !!email && allow.includes(email);
+    const inSettings = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/");
+
+    if (superAdmin && !inSettings) {
+      return NextResponse.redirect(new URL("/admin/settings", req.url));
+    }
+    if (!superAdmin && inSettings) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 

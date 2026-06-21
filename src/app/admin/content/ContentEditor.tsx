@@ -121,10 +121,10 @@ export function ContentEditor({ initial }: { initial: SiteContent }) {
       </Card>
 
       {/* Sticky save bar */}
-      <div className="sticky bottom-0 -mx-2 px-2 py-3 flex items-center gap-3" style={{ background: "var(--admin-bg)", borderTop: "1px solid var(--admin-border)" }}>
-        <button type="button" onClick={save} disabled={pending} className="btn btn-primary px-5 py-2.5">{pending ? "Saving…" : "Save changes"}</button>
-        <a href="/" target="_blank" rel="noreferrer" className="btn btn-secondary px-4 py-2.5">View site ↗</a>
-        {msg && <span className="text-meta text-admin-muted">{msg}</span>}
+      <div className="sticky bottom-0 -mx-2 px-2 py-3 row gap-3" style={{ background: "var(--bg)", borderTop: "1px solid var(--border)" }}>
+        <button type="button" onClick={save} disabled={pending} className="btn btn-primary">{pending ? "Saving…" : "Save changes"}</button>
+        <a href="/" target="_blank" rel="noreferrer" className="btn btn-secondary">View site ↗</a>
+        {msg && <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>{msg}</span>}
       </div>
     </div>
   );
@@ -132,20 +132,20 @@ export function ContentEditor({ initial }: { initial: SiteContent }) {
 
 function Card({ title, children, onAdd, addLabel }: { title: string; children: React.ReactNode; onAdd?: () => void; addLabel?: string }) {
   return (
-    <section className="bg-admin-surface border border-admin-border rounded-card p-6">
+    <section className="card">
       <div className="row-between mb-4">
         <h3 className="card-title" style={{ marginBottom: 0 }}>{title}</h3>
         {onAdd && <button type="button" onClick={onAdd} className="btn btn-ghost btn-sm">+ {addLabel}</button>}
       </div>
-      <div className="flex flex-col gap-3">{children}</div>
+      <div className="stack gap-3">{children}</div>
     </section>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold">{label}</span>
+    <label className="field" style={{ marginBottom: 0 }}>
+      <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 500, color: "var(--text)", marginBottom: 6 }}>{label}</span>
       {children}
     </label>
   );
@@ -153,12 +153,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ListItem({ children, onRemove, index }: { children: React.ReactNode; onRemove: () => void; index: number }) {
   return (
-    <div className="border border-admin-border rounded-elem p-4">
+    <div className="card" style={{ padding: "var(--space-4)" }}>
       <div className="row-between mb-2">
-        <span className="text-[11px] uppercase tracking-widest text-admin-muted font-semibold">#{index}</span>
+        <span className="muted" style={{ fontSize: "0.75rem", fontWeight: 500 }}>#{index}</span>
         <button type="button" onClick={onRemove} className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }}>Remove</button>
       </div>
-      <div className="flex flex-col gap-3">{children}</div>
+      <div className="stack gap-3">{children}</div>
     </div>
   );
 }

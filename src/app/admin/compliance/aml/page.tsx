@@ -1,26 +1,12 @@
-import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { UpgradeGate } from "@/components/admin/UpgradeGate";
 import { requireRole } from "@/lib/auth/guards";
 import { getBranding, tierAtLeast } from "@/lib/services/branding";
+import { amlResult } from "@/lib/services/aml";
 import { prisma } from "@/lib/db";
 
 export const metadata = { title: "AML screening" };
 export const dynamic = "force-dynamic";
-
-/** Deterministic mock screening result, keyed by reference (mirrors prototype).
- *  In production this panel wraps a third-party screening API. */
-function amlResult(ref: string) {
-  const hash = [...ref].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const pep = hash % 4 === 0;
-  const adverse = hash % 6 === 0;
-  return {
-    sanctions: "clear" as const,
-    pep: pep ? "match" : "clear",
-    adverse: adverse ? "flag" : "clear",
-    risk: pep && adverse ? "high" : pep || adverse ? "medium" : "low",
-  };
-}
 
 function amlBadge(v: string) {
   if (v === "clear") return <span className="badge badge-approved">Clear</span>;
@@ -105,7 +91,7 @@ export default async function AmlPage() {
         </div>
       )}
       <p className="muted mt-4" style={{ fontSize: "var(--fs-xs)" }}>
-        Need the full party-level KYC engine? See <Link href="/admin/compliance/tasks" className="link-gold">Compliance tasks</Link>.
+        Open an applicant to review their full party-level KYC file.
       </p>
       <script dangerouslySetInnerHTML={{ __html: "document.querySelectorAll('tr.crm-row').forEach(function(r){r.addEventListener('click',function(){location.href=r.getAttribute('data-href')})})" }} />
     </AdminShell>

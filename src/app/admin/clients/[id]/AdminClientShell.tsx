@@ -10,15 +10,12 @@ export function AdminClientShell({
 }) {
   return (
     <AdminShell active="clients">
-      <nav className="flex items-center gap-3 mb-8 font-mono text-[10px] tracking-[0.22em] uppercase">
-        <Link
-          href="/admin/clients"
-          className="link-gold text-muted hover:text-ink"
-        >
+      <nav className="row gap-3 mb-8 eyebrow">
+        <Link href="/admin/clients" className="link-gold muted">
           Clients
         </Link>
-        <span className="text-muted/50">/</span>
-        <span className="text-ink truncate max-w-[420px]">{breadcrumb}</span>
+        <span className="muted">/</span>
+        <span className="truncate" style={{ maxWidth: "420px" }}>{breadcrumb}</span>
       </nav>
       {children}
     </AdminShell>

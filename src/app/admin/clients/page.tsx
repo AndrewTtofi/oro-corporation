@@ -51,15 +51,13 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
   return (
     <AdminShell active="clients" search={{ placeholder: "Search clients, companies…" }}>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <div className="mb-12 flex justify-between items-end flex-wrap gap-6">
+      <div className="row-between mb-6" style={{ flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
         <div>
           <div className="eyebrow mb-2">Engagements</div>
           <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Active clients</h2>
-          <div className="mt-3 flex items-center gap-5 font-mono text-[10px] tracking-[0.22em] uppercase text-muted">
-            <span>{rows.length} on roster</span>
-            {approvedProspects.length > 0 && (
-              <span className="text-accent-deep">· {approvedProspects.length} awaiting conversion</span>
-            )}
+          <div className="muted mono mt-3" style={{ fontSize: "var(--fs-2xs)", textTransform: "uppercase", letterSpacing: ".12em" }}>
+            {rows.length} on roster
+            {approvedProspects.length > 0 && <> · {approvedProspects.length} awaiting conversion</>}
           </div>
         </div>
         <ConvertModal candidates={approvedProspects.map((p) => ({
@@ -71,10 +69,8 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
         }))} />
       </div>
 
-      <hr className="hairline mb-8" />
-
       {/* ── Filters ──────────────────────────────────────────────── */}
-      <div className="flex gap-4 mb-10 overflow-x-auto pb-1">
+      <div className="row mb-6" style={{ gap: "1rem", flexWrap: "wrap" }}>
         <FilterSelect name="service" label="Service Type" current={serviceFilter} options={[
           { value: "all", label: "All Services" },
           { value: "company_formation", label: "Company Formation" },
@@ -97,111 +93,85 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       </div>
 
       {/* ── Table ────────────────────────────────────────────────── */}
-      <div className="surface overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px]">
+      {rows.length === 0 ? (
+        <div className="empty">
+          <h3>No clients yet</h3>
+          <p>Convert an approved submission to add your first engagement.</p>
+        </div>
+      ) : (
+        <div className="tbl-wrap">
+          <div className="tbl-toolbar">
+            <strong>Clients</strong>
+            <span className="muted right" style={{ fontSize: "var(--fs-xs)" }}>{rows.length}</span>
+          </div>
+          <table className="tbl">
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--admin-border)" }}>
-                <Th>Client</Th>
-                <Th>Services</Th>
-                <Th>Partner</Th>
-                <Th>Since</Th>
-                <Th>Next key date</Th>
-                <Th>Status</Th>
+              <tr>
+                <th>Client</th>
+                <th>Services</th>
+                <th>Partner</th>
+                <th>Since</th>
+                <th>Next key date</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-16 text-center">
-                    <p className="mb-2" style={{ fontSize: "1.125rem", fontWeight: 600 }}>No clients yet.</p>
-                    <p className="text-[13px] text-muted">
-                      Convert an approved submission to add your first engagement.
-                    </p>
-                  </td>
-                </tr>
-              ) : rows.map((c) => {
+              {rows.map((c) => {
                 const partnerName = c.services.find((s) => s.assignedPartner)?.assignedPartner?.fullName ?? "—";
                 const nextKey = c.keyDates[0];
                 return (
-                  <tr
-                    key={c.id}
-                    className="group"
-                    style={{ borderTop: "1px solid var(--admin-border)" }}
-                  >
-                    <Td>
-                      <Link href={`/admin/clients/${c.id}`} className="block">
-                        <span className="font-display text-[17px] tracking-[-0.005em] text-ink leading-tight block group-hover:text-accent-deep transition-colors duration-500">
-                          {c.user.fullName}
-                        </span>
-                        <span className="block mt-0.5 font-mono text-[10px] tracking-[0.16em] uppercase text-muted">
+                  <tr key={c.id}>
+                    <td>
+                      <Link href={`/admin/clients/${c.id}`} style={{ display: "block" }}>
+                        <div style={{ fontWeight: 600 }}>{c.user.fullName}</div>
+                        <div className="muted mono" style={{ fontSize: "var(--fs-2xs)", textTransform: "uppercase", letterSpacing: ".1em" }}>
                           {c.companyName ?? "—"}
-                        </span>
+                        </div>
                       </Link>
-                    </Td>
-                    <Td>
-                      <div className="flex gap-1.5 flex-wrap">
+                    </td>
+                    <td>
+                      <div className="row" style={{ gap: ".35rem", flexWrap: "wrap" }}>
                         {c.services.map((s) => (
-                          <span
-                            key={s.id}
-                            className="font-mono text-[9.5px] tracking-[0.14em] uppercase px-2 py-1"
-                            style={{
-                              background: "var(--admin-bg)",
-                              color: "var(--admin-fg)",
-                              border: "1px solid var(--admin-border)",
-                            }}
-                          >
-                            {shortService(s.serviceType)}
-                          </span>
+                          <span key={s.id} className="badge badge-neutral">{shortService(s.serviceType)}</span>
                         ))}
                       </div>
-                    </Td>
-                    <Td className="text-[13px] text-ink">{partnerName}</Td>
-                    <Td className="font-mono figure text-[12px] text-muted">
+                    </td>
+                    <td>{partnerName}</td>
+                    <td className="mono muted" style={{ fontSize: "var(--fs-xs)" }}>
                       {c.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                    </Td>
-                    <Td>
+                    </td>
+                    <td>
                       {nextKey ? (
                         <div>
-                          <div className="text-[13px] text-ink leading-tight">{nextKey.description}</div>
-                          <div
-                            className={`font-mono figure text-[11px] tracking-[0.06em] mt-0.5 ${
-                              nextKey.status === "overdue" ? "text-oxblood" : "text-accent-deep"
-                            }`}
-                          >
-                            {nextKey.status === "overdue"
-                              ? "OVERDUE"
-                              : nextKey.dueDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                          <div>{nextKey.description}</div>
+                          <div className="mono" style={{ fontSize: "var(--fs-2xs)", marginTop: "2px" }}>
+                            {nextKey.status === "overdue" ? (
+                              <span className="badge badge-danger">Overdue</span>
+                            ) : (
+                              <span className="muted">
+                                {nextKey.dueDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                              </span>
+                            )}
                           </div>
                         </div>
-                      ) : <span className="text-muted">—</span>}
-                    </Td>
-                    <Td>
+                      ) : <span className="muted">—</span>}
+                    </td>
+                    <td>
                       <span className={`badge ${clientStatusClass(c.status)}`}>
                         {prettyClientStatus(c.status)}
                       </span>
-                    </Td>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </AdminShell>
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="text-left px-6 py-4 font-mono text-[9.5px] tracking-[0.24em] uppercase text-muted whitespace-nowrap font-medium">
-      {children}
-    </th>
-  );
-}
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-6 py-5 align-middle ${className}`}>{children}</td>;
-}
 function shortService(s: string) {
   return s === "company_formation" ? "Formation"
        : s === "tax_residency" ? "Tax"

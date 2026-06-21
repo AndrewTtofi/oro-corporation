@@ -34,6 +34,9 @@ jobs:
         env:
           ORO_DEPLOY_KEY: ${{ secrets.ORO_DEPLOY_KEY }}
           ORO_HOST: 10.50.40.100
+          # Managed config injected into the box .env by deploy-oro.sh.
+          SUPER_ADMIN_EMAILS: ${{ secrets.SUPER_ADMIN_EMAILS }}
+          SUPER_ADMIN_PASSWORD: ${{ secrets.SUPER_ADMIN_PASSWORD }}
         run: |
           set -euo pipefail
           install -m 700 -d "$HOME/.ssh"
@@ -41,11 +44,14 @@ jobs:
           chmod 600 "$HOME/.ssh/oro_deploy"
           trap 'rm -f "$HOME/.ssh/oro_deploy"' EXIT
 
+          # Pass secret-backed config to the remote shell; deploy-oro.sh reads
+          # them from env and writes them into /opt/oro/.env. GitHub masks values.
           ssh -i "$HOME/.ssh/oro_deploy" -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
-              ubuntu@"$ORO_HOST" '
-            set -euo pipefail
-            cd /opt/oro
-            git fetch --depth=1 origin main
-            git reset --hard origin/main
-            bash deploy/deploy-oro.sh
-          '
+              ubuntu@"$ORO_HOST" \
+              "SUPER_ADMIN_EMAILS='${SUPER_ADMIN_EMAILS}' SUPER_ADMIN_PASSWORD='${SUPER_ADMIN_PASSWORD}' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd /opt/oro
+          git fetch --depth=1 origin main
+          git reset --hard origin/main
+          bash deploy/deploy-oro.sh
+          REMOTE

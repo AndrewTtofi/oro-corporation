@@ -33,12 +33,10 @@ export function MessageComposer({ clientId }: { clientId: string }) {
   }
 
   return (
-    <div className="surface p-6">
-      <div className="flex items-center justify-between mb-3">
+    <div className="card">
+      <div className="row-between mb-3">
         <div className="eyebrow">Compose</div>
-        <div className="font-mono text-[9.5px] tracking-[0.18em] uppercase text-muted">
-          Visible to client
-        </div>
+        <span className="badge badge-info">Visible to client</span>
       </div>
       <textarea
         value={body}
@@ -46,19 +44,18 @@ export function MessageComposer({ clientId }: { clientId: string }) {
         onKeyDown={onKey}
         placeholder="Address the client. Be precise."
         rows={4}
-        className="input w-full"
-        style={{ borderColor: "transparent", background: "transparent", padding: "8px 0", fontSize: "15px", lineHeight: "1.6" }}
+        className="textarea"
       />
       <hr className="hairline my-3" />
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[9.5px] tracking-[0.18em] uppercase text-muted">
+      <div className="row-between">
+        <span className="muted mono" style={{ fontSize: "var(--fs-2xs)" }}>
           ⌘ + Enter to send
         </span>
         <button
           type="button"
           onClick={send}
           disabled={pending || !body.trim()}
-          className="btn btn-primary disabled:opacity-40"
+          className="btn btn-primary"
         >
           {pending ? "Sending…" : "Send →"}
         </button>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CompletenessChip } from "@/components/admin/CompletenessChip";
+import { Icon } from "@/components/Icon";
 import { prisma } from "@/lib/db";
 import { ProspectStatus } from "@prisma/client";
 import type { Completeness } from "@/lib/services/prospect-intel";
@@ -39,20 +40,18 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
 
   return (
     <AdminShell active="submissions" search={{ placeholder: "Search reference, name, email…" }}>
-      <div className="mb-12">
+      <div className="mb-6">
         <div className="eyebrow mb-2">Intake</div>
         <h2 style={{ fontSize: "1.563rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Submissions queue</h2>
-        <p className="mt-2 max-w-[60ch] text-muted" style={{ fontSize: "0.9375rem", lineHeight: 1.6 }}>
+        <p className="muted mt-2" style={{ maxWidth: "60ch", fontSize: "0.9375rem", lineHeight: 1.6 }}>
           Applications submitted by prospective clients via the onboarding wizard.
           Review the file, exchange messages, run compliance, and convert once
           approved.
         </p>
       </div>
 
-      <hr className="hairline mb-8" />
-
       {/* ── Filter chips ──────────────────────────────────────────── */}
-      <div className="flex gap-3 mb-10 flex-wrap">
+      <div className="chips mb-6">
         {[
           { key: "all", label: "All" },
           { key: "pending", label: "Pending" },
@@ -65,14 +64,7 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
             <Link
               key={f.key}
               href={f.key === "all" ? "/admin/submissions" : `/admin/submissions?status=${f.key}`}
-              className={`px-4 py-2 font-mono text-[10px] tracking-[0.22em] uppercase transition-all duration-500 ${
-                isActive ? "text-bone" : "text-muted hover:text-ink"
-              }`}
-              style={
-                isActive
-                  ? { background: "var(--ink)", border: "1px solid var(--ink)" }
-                  : { background: "transparent", border: "1px solid var(--admin-border)" }
-              }
+              className={`chip ${isActive ? "active" : ""}`}
             >
               {f.label}
             </Link>
@@ -81,103 +73,87 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
       </div>
 
       {/* ── Table ─────────────────────────────────────────────────── */}
-      <div className="surface overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[840px]">
-            <thead>
-              <tr style={{ borderBottom: "1px solid var(--admin-border)" }}>
-                <Th>Reference</Th>
-                <Th>Applicant</Th>
-                <Th>Services</Th>
-                <Th>Country</Th>
-                <Th>Brief</Th>
-                <Th>Submitted</Th>
-                <Th>Status</Th>
+      <div className="tbl-wrap">
+        <div className="tbl-toolbar">
+          <strong>Submissions</strong>
+          <span className="muted right" style={{ fontSize: "var(--fs-xs)" }}>{rows.length}</span>
+        </div>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Applicant</th>
+              <th>Services</th>
+              <th>Country</th>
+              <th>Brief</th>
+              <th>Submitted</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={7}>
+                  <div className="empty">
+                    <div className="ec"><Icon name="search" /></div>
+                    <h3>No submissions match.</h3>
+                    <p>Try a different filter, or wait for the next application to arrive.</p>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="p-16 text-center">
-                    <p className="mb-2" style={{ fontSize: "1.125rem", fontWeight: 600 }}>No submissions match.</p>
-                    <p className="text-[13px] text-muted">
-                      Try a different filter, or wait for the next application to arrive.
-                    </p>
+            ) : rows.map((p) => {
+              const country = p.details.find((d) => d.fieldName === "residenceCountry")?.fieldValue
+                            ?? p.details.find((d) => d.fieldName === "nationality")?.fieldValue
+                            ?? "—";
+              const services = Array.isArray(p.servicesSelected) ? (p.servicesSelected as string[]) : [];
+              return (
+                <tr key={p.id}>
+                  <td>
+                    <Link
+                      href={`/admin/submissions/${p.referenceNumber}`}
+                      className="mono"
+                      style={{ fontSize: "var(--fs-xs)" }}
+                    >
+                      {p.referenceNumber}
+                    </Link>
+                  </td>
+                  <td>
+                    <Link href={`/admin/submissions/${p.referenceNumber}`} style={{ display: "block" }}>
+                      <div style={{ fontWeight: 500 }}>{p.user.fullName}</div>
+                      <div className="sub">{p.user.email}</div>
+                    </Link>
+                  </td>
+                  <td>
+                    <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+                      {services.length === 0 && <span className="muted">—</span>}
+                      {services.map((s) => (
+                        <span key={s} className="badge badge-neutral">{pretty(s)}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="muted">{country}</td>
+                  <td>
+                    {(() => {
+                      const eff = (p.completenessOverride ?? p.completeness) as Completeness | null;
+                      return eff ? <CompletenessChip value={eff} /> : <span className="muted">—</span>;
+                    })()}
+                  </td>
+                  <td className="mono">
+                    {p.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                  <td>
+                    <span className={`badge ${statusClass(p.status)}`}>{prettyStatus(p.status)}</span>
                   </td>
                 </tr>
-              ) : rows.map((p) => {
-                const country = p.details.find((d) => d.fieldName === "residenceCountry")?.fieldValue
-                              ?? p.details.find((d) => d.fieldName === "nationality")?.fieldValue
-                              ?? "—";
-                const services = Array.isArray(p.servicesSelected) ? (p.servicesSelected as string[]) : [];
-                return (
-                  <tr key={p.id} className="group" style={{ borderTop: "1px solid var(--admin-border)" }}>
-                    <Td>
-                      <Link
-                        href={`/admin/submissions/${p.referenceNumber}`}
-                        className="font-mono figure text-[12px] tracking-[0.04em] text-accent-deep link-gold"
-                      >
-                        {p.referenceNumber}
-                      </Link>
-                    </Td>
-                    <Td>
-                      <Link href={`/admin/submissions/${p.referenceNumber}`} className="block">
-                        <span className="font-display text-[17px] tracking-[-0.005em] text-ink leading-tight block group-hover:text-accent-deep transition-colors duration-500">
-                          {p.user.fullName}
-                        </span>
-                        <span className="block mt-0.5 font-mono text-[10px] tracking-[0.14em] uppercase text-muted">
-                          {p.user.email}
-                        </span>
-                      </Link>
-                    </Td>
-                    <Td>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {services.length === 0 && <span className="text-muted">—</span>}
-                        {services.map((s) => (
-                          <span
-                            key={s}
-                            className="font-mono text-[9.5px] tracking-[0.14em] uppercase px-2 py-1"
-                            style={{ background: "var(--admin-bg)", color: "var(--admin-fg)", border: "1px solid var(--admin-border)" }}
-                          >
-                            {pretty(s)}
-                          </span>
-                        ))}
-                      </div>
-                    </Td>
-                    <Td className="font-mono figure text-[12px] uppercase tracking-[0.12em] text-muted">{country}</Td>
-                    <Td>
-                      {(() => {
-                        const eff = (p.completenessOverride ?? p.completeness) as Completeness | null;
-                        return eff ? <CompletenessChip value={eff} /> : <span className="text-muted">—</span>;
-                      })()}
-                    </Td>
-                    <Td className="font-mono figure text-[12px] text-muted">
-                      {p.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                    </Td>
-                    <Td>
-                      <span className={`badge ${statusClass(p.status)}`}>{prettyStatus(p.status)}</span>
-                    </Td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </AdminShell>
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="text-left px-6 py-4 font-mono text-[9.5px] tracking-[0.24em] uppercase text-muted font-medium">
-      {children}
-    </th>
-  );
-}
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-6 py-5 align-middle ${className}`}>{children}</td>;
-}
 function pretty(s: string) {
   return s.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 }

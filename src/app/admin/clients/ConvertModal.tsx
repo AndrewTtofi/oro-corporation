@@ -48,7 +48,7 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-primary px-6 py-2.5 gap-2">
+      <button type="button" onClick={() => setOpen(true)} className="btn btn-primary">
         <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
           <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M16 11h6"/>
         </svg>
@@ -56,35 +56,35 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center p-5 backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="bg-admin-surface rounded-card w-full max-w-[600px] overflow-hidden">
-            <div className="px-6 py-5 border-b border-admin-border flex justify-between items-center">
-              <h3 className="font-display text-xl">Convert from Prospect</h3>
-              <button type="button" onClick={() => setOpen(false)} className="text-admin-muted">✕</button>
+        <div className="scrim" onClick={() => setOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Convert from Prospect</h3>
+              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-sm">✕</button>
             </div>
-            <div className="p-6 max-h-[440px] overflow-y-auto">
-              <p className="text-meta text-admin-muted mb-5">
+            <div className="modal-body">
+              <p className="muted mb-6" style={{ fontSize: "var(--fs-sm)" }}>
                 The following approved prospects are ready to be converted to active clients.
               </p>
               {candidates.length === 0 ? (
-                <p className="text-meta text-admin-muted">No approved prospects waiting.</p>
+                <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>No approved prospects waiting.</p>
               ) : (
-                <ul className="flex flex-col gap-3">
+                <ul className="row" style={{ flexDirection: "column", gap: ".75rem" }}>
                   {candidates.map((c) => (
-                    <li key={c.prospectId} className="flex items-center justify-between gap-3 p-3 rounded-inner border border-admin-border">
+                    <li key={c.prospectId} className="card row-between" style={{ gap: ".75rem", alignItems: "center" }}>
                       <div>
-                        <div className="text-meta font-semibold flex items-center gap-2">
+                        <div className="row" style={{ alignItems: "center", gap: ".5rem", fontWeight: 600 }}>
                           {c.name}
                           {c.compliance === "cleared" ? (
                             <span className="badge badge-approved">✓ Cleared</span>
                           ) : c.compliance === "blocked" ? (
-                            <span className="badge badge-pending" style={{ color: "#DC2626" }}>✗ Blocked</span>
+                            <span className="badge badge-danger">✗ Blocked</span>
                           ) : (
                             <span className="badge badge-pending">⚠ In review</span>
                           )}
                         </div>
-                        <div className="text-[12px] text-admin-muted">
-                          Ref: <span className="font-mono">{c.referenceNumber}</span> · {c.services.map(pretty).join(", ")}
+                        <div className="muted mt-1" style={{ fontSize: "var(--fs-xs)" }}>
+                          Ref: <span className="mono">{c.referenceNumber}</span> · {c.services.map(pretty).join(", ")}
                         </div>
                       </div>
                       {c.compliance === "cleared" ? (
@@ -92,14 +92,14 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
                           type="button"
                           onClick={() => convert(c.prospectId)}
                           disabled={pending}
-                          className="btn btn-primary px-3 py-1.5 text-[12px] disabled:opacity-50"
+                          className="btn btn-primary btn-sm"
                         >
                           Make Client
                         </button>
                       ) : (
                         <a
                           href={`/admin/submissions/${c.referenceNumber}/compliance`}
-                          className="text-meta underline"
+                          className="btn btn-ghost btn-sm"
                         >
                           Open compliance →
                         </a>
@@ -108,10 +108,10 @@ export function ConvertModal({ candidates }: { candidates: Candidate[] }) {
                   ))}
                 </ul>
               )}
-              {error && <div className="text-meta mt-4" style={{ color: "#DC2626" }}>{error}</div>}
+              {error && <div className="badge badge-danger mt-4">{error}</div>}
             </div>
-            <div className="px-6 py-4 border-t border-admin-border flex justify-end" style={{ background: "#F9FAFB" }}>
-              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost px-5 py-2.5">Cancel</button>
+            <div className="modal-foot">
+              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost">Cancel</button>
             </div>
           </div>
         </div>

@@ -13,11 +13,11 @@ export async function TopNav() {
         </Link>
         <div className="pubnav-links">
           <Link href="/services">Services</Link>
-          <Link href="/#how">How it works</Link>
           <Link href="/pricing">Pricing</Link>
+          <Link href="/marketplace">Partner network</Link>
           <Link href="/tools/compare">Compare</Link>
-          <Link href="/tools/calculator">Tax calculator</Link>
           <Link href="/faq">FAQ</Link>
+          <Link href="/advisor">Advisor <span className="badge badge-new" style={{ marginLeft: 4 }}>AI</span></Link>
         </div>
         <div className="pubnav-right">
           <Link href="/login" className="btn btn-ghost btn-sm">Sign in</Link>
