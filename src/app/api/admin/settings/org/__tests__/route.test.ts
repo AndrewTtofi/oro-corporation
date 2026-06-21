@@ -57,14 +57,28 @@ describe("admin/settings/org PATCH", () => {
     });
   });
 
-  it("bad input (missing displayName) → 422", async () => {
+  it("bad input (invalid email) → 422", async () => {
     await inRollbackTx(prisma, async (rawTx) => {
       const tx = wrapTx(rawTx);
       const staff = await createStaff(tx);
       sessionState.user = { id: staff.id, email: staff.email, fullName: staff.fullName, role: "staff" };
       const { PATCH } = await loadRoute(tx);
-      const res = await PATCH(makeReq({ method: "PATCH", body: {} }));
+      const res = await PATCH(makeReq({ method: "PATCH", body: { contactEmail: "not-an-email" } }));
       expect(res.status).toBe(422);
+    });
+  });
+
+  it("partial branding-only patch (no displayName) → 200", async () => {
+    await inRollbackTx(prisma, async (rawTx) => {
+      const tx = wrapTx(rawTx);
+      const staff = await createStaff(tx);
+      sessionState.user = { id: staff.id, email: staff.email, fullName: staff.fullName, role: "staff" };
+      const { PATCH } = await loadRoute(tx);
+      const res = await PATCH(makeReq({ method: "PATCH", body: { planTier: "scale", themePreset: "emerald" } }));
+      expect(res.status).toBe(200);
+      const row = await tx.orgSettings.findUnique({ where: { id: "singleton" } });
+      expect(row?.planTier).toBe("scale");
+      expect(row?.themePreset).toBe("emerald");
     });
   });
 
