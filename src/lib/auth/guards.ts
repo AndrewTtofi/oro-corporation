@@ -46,3 +46,11 @@ export async function currentIsSuperAdmin(): Promise<boolean> {
   const session = await auth();
   return isSuperAdmin(session?.user);
 }
+
+/** Server-side: require the super admin (settings area). Non-super staff are
+ *  sent to their admin home; unauthenticated users to /login. */
+export async function requireSuperAdmin() {
+  const user = await requireUser();
+  if (!isSuperAdmin(user)) redirect("/admin");
+  return user;
+}

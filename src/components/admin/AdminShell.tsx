@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
 import { getBranding, tierAtLeast } from "@/lib/services/branding";
+import { currentIsSuperAdmin } from "@/lib/auth/guards";
 
 type AdminTab = "submissions" | "bookings" | "clients" | "leads" | "users" | "compliance" | "compliance-calendar" | "aml" | "analytics" | "content" | "settings";
 
@@ -38,6 +39,7 @@ export async function AdminShell({
   title?: string;
 }) {
   const { brandName, brandMark, planTier } = await getBranding();
+  const superAdmin = await currentIsSuperAdmin();
   const Item = ({ id, href, icon, label }: { id: AdminTab; href: string; icon: React.ReactNode; label: string }) => (
     <Link href={href} className={`sb-item${active === id ? " active" : ""}`}>{icon}<span>{label}</span></Link>
   );
@@ -49,30 +51,38 @@ export async function AdminShell({
           <span className="mk">{brandMark}</span>
           <div>
             <div className="nm">{brandName}</div>
-            <div className="rl">Firm admin</div>
+            <div className="rl">{superAdmin ? "Platform admin" : "Firm admin"}</div>
           </div>
         </div>
         <nav className="sb-nav">
-          <div className="sb-group">Pipeline</div>
-          <Item id="submissions" href="/admin/submissions" icon={I.submissions} label="Submissions" />
-          <Item id="leads" href="/admin/crm" icon={I.users} label="Leads / CRM" />
-          <Item id="bookings" href="/admin/bookings" icon={I.bookings} label="Bookings" />
-          <div className="sb-group">Engagements</div>
-          <Item id="clients" href="/admin/clients" icon={I.clients} label="Clients" />
-          <Item id="compliance" href="/admin/compliance/tasks" icon={I.compliance} label="Compliance" />
-          {tierAtLeast(planTier, "professional") && (
-            <Item id="compliance-calendar" href="/admin/compliance/calendar" icon={I.bookings} label="Compliance calendar" />
+          {superAdmin ? (
+            <>
+              <div className="sb-group">Configuration</div>
+              <Item id="settings" href="/admin/settings" icon={I.settings} label="Settings" />
+            </>
+          ) : (
+            <>
+              <div className="sb-group">Pipeline</div>
+              <Item id="submissions" href="/admin/submissions" icon={I.submissions} label="Submissions" />
+              <Item id="leads" href="/admin/crm" icon={I.users} label="Leads / CRM" />
+              <Item id="bookings" href="/admin/bookings" icon={I.bookings} label="Bookings" />
+              <div className="sb-group">Engagements</div>
+              <Item id="clients" href="/admin/clients" icon={I.clients} label="Clients" />
+              <Item id="compliance" href="/admin/compliance/tasks" icon={I.compliance} label="Compliance" />
+              {tierAtLeast(planTier, "professional") && (
+                <Item id="compliance-calendar" href="/admin/compliance/calendar" icon={I.bookings} label="Compliance calendar" />
+              )}
+              {tierAtLeast(planTier, "scale") && (
+                <Item id="aml" href="/admin/compliance/aml" icon={I.compliance} label="AML screening" />
+              )}
+              <div className="sb-group">Firm</div>
+              <Item id="users" href="/admin/users" icon={I.users} label="Users" />
+              <Item id="analytics" href="/admin/analytics" icon={I.analytics} label="Analytics" />
+              <Item id="content" href="/admin/content" icon={I.content} label="Content" />
+            </>
           )}
-          {tierAtLeast(planTier, "scale") && (
-            <Item id="aml" href="/admin/compliance/aml" icon={I.compliance} label="AML screening" />
-          )}
-          <div className="sb-group">Firm</div>
-          <Item id="users" href="/admin/users" icon={I.users} label="Users" />
-          <Item id="analytics" href="/admin/analytics" icon={I.analytics} label="Analytics" />
-          <Item id="content" href="/admin/content" icon={I.content} label="Content" />
         </nav>
         <div className="sb-foot">
-          <Item id="settings" href="/admin/settings" icon={I.settings} label="Settings" />
           <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
             <button type="submit" className="sb-item w-full" style={{ background: "transparent", border: 0 }}>{I.logout}<span>Log out</span></button>
           </form>

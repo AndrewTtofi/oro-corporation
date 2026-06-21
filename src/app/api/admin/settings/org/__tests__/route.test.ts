@@ -18,6 +18,11 @@ vi.mock("@/lib/auth/guards", () => ({
     if (!_allowed.includes(sessionState.user.role)) throw new Error("FORBIDDEN");
     return sessionState.user;
   },
+  isSuperAdmin: (user: { email?: string | null } | null | undefined) => {
+    const allow = (process.env.SUPER_ADMIN_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const email = user?.email?.toLowerCase();
+    return !!email && allow.includes(email);
+  },
 }));
 vi.mock("@/lib/providers/email", () => ({
   email: () => ({ send: async () => ({ ok: true }) }),

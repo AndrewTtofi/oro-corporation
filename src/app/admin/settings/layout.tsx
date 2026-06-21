@@ -1,9 +1,10 @@
 import { AdminShell } from "@/components/admin/AdminShell";
-import { requireRole } from "@/lib/auth/guards";
+import { requireSuperAdmin } from "@/lib/auth/guards";
 import { SettingsNav } from "./SettingsNav";
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
-  await requireRole("staff");
+  // Settings is the platform admin's area only; staff are redirected away.
+  await requireSuperAdmin();
   return (
     <AdminShell active="settings">
       <div className="mb-8">

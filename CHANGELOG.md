@@ -10,8 +10,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
-### Added — Super-admin plan control
-- The plan tier is now operator-controlled. A "super admin" (the platform/code owner) is designated by the `SUPER_ADMIN_EMAILS` env allowlist (set at deploy time). Only a super admin can change the plan tier from **Settings → Branding & plan**; tenant staff see the tier read-only ("managed by your platform provider"). Enforced server-side in `PATCH /api/admin/settings/org` (403 otherwise), not just hidden in the UI. Branding (name/colour/theme) remains staff-editable. Helpers `isSuperAdmin()` / `currentIsSuperAdmin()` in `src/lib/auth/guards.ts`.
+### Added — Two admin personas (platform admin vs staff admin)
+- Split the admin surface into two personas, both on the `staff` DB role, distinguished by the `SUPER_ADMIN_EMAILS` env allowlist (set by the platform operator at deploy time):
+  - **Platform admin** (super admin, the code owner) sees **only** the Settings area (`/admin/settings/*` — branding, plan, services, team, flags).
+  - **Staff admin** (everyone else) sees **everything except** Settings.
+- Enforced in `middleware.ts` by path: a super admin hitting any non-settings `/admin` route is redirected to `/admin/settings`; a staff admin hitting settings is redirected to `/admin`. The settings layout also guards with `requireSuperAdmin()`, and `PATCH /api/admin/settings/org` rejects plan-tier changes from non-super-admins (403). The admin sidebar shows each persona only its own nav.
+- The plan tier is therefore operator-controlled and edited in **Settings → Branding & plan** (prototype tier-card UI). Helpers `isSuperAdmin()` / `currentIsSuperAdmin()` / `requireSuperAdmin()` in `src/lib/auth/guards.ts`; JWT now carries `email` for the middleware check.
 
 ### Changed — Repository renamed to `fiduciary-software`
 - Renamed the GitHub repo `oro-corporation` → `fiduciary-software`. CI derives the GHCR image path from the repo name automatically; updated the one hardcoded image reference in `deploy/deploy-oro.sh` to `ghcr.io/andrewttofi/fiduciary-software:latest` so deploys keep matching the freshly-built image. Updated clone/wiki URLs in the README and getting-started docs. GitHub redirects keep old URLs working.

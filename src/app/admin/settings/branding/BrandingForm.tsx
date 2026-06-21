@@ -84,6 +84,7 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
   }
 
   return (
+    <>
     <div className="twocol">
       <div>
         <div className="card mb-4">
@@ -97,6 +98,9 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
             <input className="input" maxLength={2} value={brandMark} onChange={(e) => setBrandMark(e.target.value)} placeholder={mark} style={{ maxWidth: 100 }} />
             <div className="help">Shown in the square logo mark. Defaults to the first letter of the brand name.</div>
           </div>
+
+          <hr style={{ border: 0, height: 1, background: "var(--admin-border)", margin: "var(--space-5) 0" }} />
+
           <div className="field">
             <label>Theme preset</label>
             <div className="row gap-2" style={{ flexWrap: "wrap" }}>
@@ -178,11 +182,12 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
             })}
           </div>
         </div>
-        <div className="row gap-3">
-          <button type="button" disabled={pending} className="btn btn-primary" onClick={save}>{pending ? "Saving…" : canEditPlan ? "Save branding & plan" : "Save branding"}</button>
-          {msg && <span className="text-meta text-admin-muted">{msg}</span>}
-        </div>
       </div>
     </div>
+    <div className="row gap-3 mt-6" style={{ borderTop: "1px solid var(--admin-border)", paddingTop: "var(--space-5)" }}>
+      <button type="button" disabled={pending} className="btn btn-primary" onClick={save}>{pending ? "Saving…" : canEditPlan ? "Save branding & plan" : "Save branding"}</button>
+      {msg && <span className="text-meta text-admin-muted">{msg}</span>}
+    </div>
+    </>
   );
 }
