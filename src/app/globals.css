@@ -486,7 +486,7 @@
    ===================================================================== */
 
 /* icons rendered standalone (sized via descendant selectors elsewhere) */
-.ic { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; }
+.ic { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .ic-24 { width: 24px; height: 24px; }
 .ic-18 { width: 18px; height: 18px; }
 .ic-16 { width: 16px; height: 16px; }
@@ -592,3 +592,26 @@
 .modal-body { padding: var(--space-6); }
 .modal-foot { display: flex; justify-content: flex-end; gap: 12px; padding: var(--space-5) var(--space-6); border-top: 1px solid var(--border-color); }
 .flabel { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+
+/* =====================================================================
+   AI Advisor + chat bubbles (prototype (1) additions)
+   ===================================================================== */
+.thread { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-2); }
+.bubble { max-width: 72%; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.875rem; line-height: 1.5; }
+.bubble.them { align-self: flex-start; background: var(--surface-2); color: var(--text); border-bottom-left-radius: 3px; }
+.bubble.me { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
+.composer { display: flex; gap: 10px; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-color); }
+.composer .input, .composer textarea { flex: 1; }
+.advisor-wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; }
+.advisor-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--border-color); margin-bottom: var(--space-4); }
+.advisor-thread { min-height: 46vh; max-height: calc(100vh - 240px); overflow: auto; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.advisor-chips { margin-top: var(--space-2); align-self: flex-start; }
+.advisor-composer { position: sticky; bottom: 0; background: var(--bg); padding: var(--space-3) 0 0; margin-top: var(--space-3); border-top: 1px solid var(--border-color); }
+.bubble.typing { display: inline-flex; gap: 5px; align-items: center; width: auto; }
+.bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: blink 1.2s infinite; }
+.bubble.typing span:nth-child(2) { animation-delay: .18s; }
+.bubble.typing span:nth-child(3) { animation-delay: .36s; }
+@keyframes blink { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+.advisor-rec { border-color: var(--brand); max-width: 520px; width: 100%; }
+.rec-svc { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.rec-jur { border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; background: var(--surface-2); }

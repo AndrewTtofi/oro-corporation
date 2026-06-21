@@ -10,6 +10,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Added — AI Advisor (new prototype)
+- `/advisor`: a conversational AI advisor (free, no sign-up) that matches a free-text need to a recommendation. Keyword intent tree (`src/lib/data/advisor.ts`) with clarify chips and branch routing; renders a recommendation card (service(s) + primary jurisdiction with corp/VAT/formation stats + "also strong" alternatives) and CTAs (Start application, See matching providers, Compare jurisdictions). Added "Advisor" (AI badge) to the public nav.
+- Shared `Icon` component (`src/components/Icon.tsx`, full prototype icon set) and `services` data module for reuse across the new features.
+
+
 ### Added — Partner-network marketplace (new prototype)
 - Marketplace of 20 vetted partners (banks/EMIs, corporate services, advisory, licensing) for visitors and clients: category tabs, search, jurisdiction/industry/speed filters, remote toggle, sort, grid/list views, provider detail modal, compare (up to 3) modal, and concierge. `/marketplace` (public) + `/app/marketplace` (client).
 - "Get started" applies to a partner (persisted via new `Application` model + `POST /api/applications`); clients track them under **My applications** (`/app/applications`). Reuses the verified KYC profile messaging.
