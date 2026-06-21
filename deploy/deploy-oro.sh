@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."   # repo root
 
-IMAGE="${ORO_IMAGE:-ghcr.io/andrewttofi/oro-corporation:latest}"
+IMAGE="${ORO_IMAGE:-ghcr.io/andrewttofi/fiduciary-software:latest}"
 PUBIP="${ORO_PUBLIC_IP:-185.106.101.11}"
 
 echo "[deploy] image=$IMAGE pubip=$PUBIP"

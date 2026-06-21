@@ -10,6 +10,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — Repository renamed to `fiduciary-software`
+- Renamed the GitHub repo `oro-corporation` → `fiduciary-software`. CI derives the GHCR image path from the repo name automatically; updated the one hardcoded image reference in `deploy/deploy-oro.sh` to `ghcr.io/andrewttofi/fiduciary-software:latest` so deploys keep matching the freshly-built image. Updated clone/wiki URLs in the README and getting-started docs. GitHub redirects keep old URLs working.
+
 ### Added — White-label platform features
 - White-label branding: configurable brand name, wordmark letter, accent colour and theme preset (indigo/emerald/gold/burgundy/slate), applied app-wide via injected CSS variables (`src/lib/services/branding.ts`). New **Settings → Branding & plan** tab with live preview.
 - Plan tiers (Starter/Professional/Scale) with feature gating: partner portal + compliance calendar require Professional; AML screening requires Scale. `tierAtLeast()` helper, `UpgradeGate` component, tier-aware admin nav.

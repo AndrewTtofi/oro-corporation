@@ -9,8 +9,8 @@
 ## First boot
 
 ```bash
-git clone git@github.com:AndrewTtofi/Ttofis/oro-corporation.git
-cd oro-corporation
+git clone git@github.com:AndrewTtofi/fiduciary-software.git
+cd fiduciary-software
 cp .env.example .env
 # Generate secrets:
 echo "AUTH_SECRET=$(openssl rand -base64 48)" >> .env

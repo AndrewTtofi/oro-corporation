@@ -16,7 +16,7 @@ The full reference lives in [**`docs/wiki/`**](./docs/wiki/) — 18 chapters cov
 - [Admin panel — every tab](./docs/wiki/11-admin-panel.md)
 - [Compliance / KYC / AML](./docs/wiki/06-compliance.md)
 
-The same content is also published to the [**GitHub Wiki**](https://github.com/AndrewTtofi/oro-corporation/wiki) for sidebar-style browsing.
+The same content is also published to the [**GitHub Wiki**](https://github.com/AndrewTtofi/fiduciary-software/wiki) for sidebar-style browsing.
 
 ## Architecture
 
