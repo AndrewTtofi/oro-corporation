@@ -41,4 +41,4 @@ test-results/
 .gstack/
 
 # Design reference artifact (kept locally, not in the repo)
-(C) Platform Prototype.html
+(C) Platform Prototype*.html
