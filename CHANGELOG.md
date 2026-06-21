@@ -10,6 +10,24 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Added — White-label platform features
+- White-label branding: configurable brand name, wordmark letter, accent colour and theme preset (indigo/emerald/gold/burgundy/slate), applied app-wide via injected CSS variables (`src/lib/services/branding.ts`). New **Settings → Branding & plan** tab with live preview.
+- Plan tiers (Starter/Professional/Scale) with feature gating: partner portal + compliance calendar require Professional; AML screening requires Scale. `tierAtLeast()` helper, `UpgradeGate` component, tier-aware admin nav.
+- Public lead-magnet tools: **jurisdiction comparison** (`/tools/compare`, 18 jurisdictions, sortable, best-value highlight) and **tax calculator** (`/tools/calculator`, email-gated reveal → creates a CRM lead). Corporate-tax and VAT figures verified against PwC Worldwide Tax Summaries with per-row source links (reviewed June 2026).
+- CRM: `Lead` model + `/admin/crm` unified pipeline (leads/applicants/clients); public `POST /api/leads` capture.
+- AI-generated internal brief + auto-computed completeness score (low/med/high) on submissions, with a staff override and a Brief column in the queue (`src/lib/services/prospect-intel.ts`).
+- Compliance calendar (`/admin/compliance/calendar`) and AML screening (`/admin/compliance/aml`), both tier-gated.
+- Editable marketing content (CMS-lite): `SiteContent` model + **Settings → Content** editor (hero, steps, stats, testimonials, CTA, FAQ); landing page and FAQ read from it live.
+
+### Added — Ops & notifications
+- Discord deploy notifications: `notify-discord` workflow posts a plain-language "what changed" forum summary (from the changelog) after a successful deploy; editable templates in `scripts/notify-deploy/`.
+- Dependabot (`.github/dependabot.yml`): weekly grouped updates for npm, GitHub Actions and Docker.
+
+### Fixed — Admin UI
+- Client document folders showed raw service keys (`company_formation`) instead of labels — the page now seeds/reads the service taxonomy via `getServices()` with a humanize fallback.
+- Client **Services** tab rows were misaligned in the narrow content column — restructured into a card with an aligned name+actions header and equal Status/Partner/Notes columns.
+- Disabled the Next.js dev indicator that overlapped the sidebar "Log out".
+
 ### Changed — "Quiet Authority" redesign (full)
 - Re-skinned the design system from the warm "private-bank" serif aesthetic to the platform prototype: indigo brand (`#2E4A8B`) + champagne-gold accent (`#C9A86A`), cool light-gray surfaces, navy ink, **system sans** (dropped Fraunces serif), rounded 6–8px corners, navy-tinted shadows.
 - `tailwind.config.ts` + `globals.css` retoken (names kept stable so utilities re-skin without edits); added prototype component classes (card/kpi/table/timeline/bubble/note/chip/avatar/sidebar/appbar/auth).

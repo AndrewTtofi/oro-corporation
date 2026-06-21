@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TopNav } from "@/components/marketing/TopNav";
 import { Footer } from "@/components/marketing/Footer";
+import { getSiteContent } from "@/lib/services/content";
 
 export const metadata = { title: "FAQ" };
 
@@ -10,16 +11,8 @@ const Chevron = () => (
   </svg>
 );
 
-const FAQ: [string, string][] = [
-  ["Why do I submit documents before booking a call?", "The gate ensures every consultation is with a serious, pre-qualified prospect. It also means your advisor walks into the call already knowing your situation — no time wasted on basics."],
-  ["Where is my data stored?", "All data — including identity documents and financial information — is encrypted and stored within the EU, with GDPR-compliant data-portability and exit terms."],
-  ["How long does review take?", "Typically 1–3 business days. You are notified by email (and WhatsApp, if enabled) the moment your application is approved and booking unlocks."],
-  ["What happens to my information if I do not proceed?", "You can request export or deletion of your records at any time. Nothing is shared with third parties without your consent."],
-  ["Which services can I apply for?", "Company formation, accounting & tax, tax residency, immigration, licensing and banking. Each has a tailored intake form so you only answer relevant questions."],
-  ["How is pricing structured?", "Three engagements — Essentials, Standard and Full service — billed as a setup fee plus a monthly retainer, or a custom quote. See the pricing page for a full comparison."],
-];
-
-export default function FaqPage() {
+export default async function FaqPage() {
+  const { faq } = await getSiteContent();
   return (
     <div className="shell-marketing">
       <TopNav />
@@ -32,10 +25,10 @@ export default function FaqPage() {
             </div>
 
             <div className="acc">
-              {FAQ.map(([q, a]) => (
-                <details key={q} className="acc-item">
-                  <summary className="acc-q">{q}<Chevron /></summary>
-                  <div className="acc-a">{a}</div>
+              {faq.map((item, i) => (
+                <details key={i} className="acc-item">
+                  <summary className="acc-q">{item.q}<Chevron /></summary>
+                  <div className="acc-a">{item.a}</div>
                 </details>
               ))}
             </div>

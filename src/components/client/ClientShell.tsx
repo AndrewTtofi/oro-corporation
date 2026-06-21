@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
+import { getBranding } from "@/lib/services/branding";
 
 type ActiveKey = "dashboard" | "application" | "messages" | "documents" | "booking" | "settings";
 
@@ -25,7 +26,7 @@ const TITLES: Record<ActiveKey, string> = {
   settings: "Settings",
 };
 
-export function ClientShell({
+export async function ClientShell({
   children,
   active,
   approved,
@@ -36,6 +37,7 @@ export function ClientShell({
   approved: boolean;
   title?: string;
 }) {
+  const { brandName, brandMark } = await getBranding();
   const Item = ({ id, icon, label, locked }: { id: ActiveKey; icon: React.ReactNode; label: string; locked?: boolean }) => {
     const cls = `sb-item${active === id ? " active" : ""}${locked ? " locked" : ""}`;
     const inner = <>{icon}<span>{label}</span>{locked && <span className="lockic">{I.lock}</span>}</>;
@@ -46,9 +48,9 @@ export function ClientShell({
     <div className="shell shell-client">
       <aside className="sidebar">
         <div className="sb-org">
-          <span className="mk">O</span>
+          <span className="mk">{brandMark}</span>
           <div>
-            <div className="nm">ORO</div>
+            <div className="nm">{brandName}</div>
             <div className="rl">Client portal</div>
           </div>
         </div>

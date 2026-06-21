@@ -1,33 +1,34 @@
 import Link from "next/link";
+import { getBranding } from "@/lib/services/branding";
 
-export function Footer() {
+export async function Footer() {
+  const { brandName, brandMark } = await getBranding();
   return (
     <footer className="pubfooter">
       <div className="cols">
         <div>
           <div className="wordmark" style={{ marginBottom: 16 }}>
             <span className="seal" />
-            <span className="mk">O</span>
-            <span>ORO</span>
+            <span className="mk">{brandMark}</span>
+            <span>{brandName}</span>
           </div>
           <p style={{ maxWidth: "36ch", color: "#8C97B5", fontSize: "0.875rem" }}>
-            Private corporate counsel for international principals. Incorporation,
-            tax residency, banking and fiduciary administration from Cyprus.
+            A qualify-first onboarding platform for corporate-services &amp; fiduciary
+            firms. Your brand, your clients, one platform.
           </p>
         </div>
         <div>
-          <h4>Services</h4>
-          <Link href="/services">Company formation</Link>
-          <Link href="/services">Tax residency</Link>
-          <Link href="/services">Immigration</Link>
-          <Link href="/services">Banking</Link>
-        </div>
-        <div>
           <h4>Platform</h4>
+          <Link href="/services">Services</Link>
           <Link href="/#how">How it works</Link>
           <Link href="/pricing">Pricing</Link>
-          <Link href="/faq">FAQ</Link>
           <Link href="/login">Start application</Link>
+        </div>
+        <div>
+          <h4>Tools</h4>
+          <Link href="/tools/compare">Compare jurisdictions</Link>
+          <Link href="/tools/calculator">Tax calculator</Link>
+          <Link href="/faq">FAQ</Link>
         </div>
         <div>
           <h4>Access</h4>
@@ -37,7 +38,7 @@ export function Footer() {
         </div>
       </div>
       <div className="legal">
-        <span>© 2026 ORO Corporate Services Limited.</span>
+        <span>© 2026 {brandName}. EU data residency · GDPR-ready.</span>
         <span style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>

@@ -4,6 +4,7 @@ import { logActivity } from "./activity";
 import { createComplianceFileForProspect } from "@/lib/services/compliance/files";
 import { ProspectStatus, type Prisma } from "@prisma/client";
 import { submitSchema, type SubmitInput, type FullDraft, refineForSubmit, SERVICE_KEYS } from "@/lib/schema/onboarding";
+import { computeCompleteness } from "@/lib/services/prospect-intel";
 
 /** Returns the user's existing prospect or creates a new draft one. */
 export async function ensureProspect(userId: string) {
@@ -106,9 +107,15 @@ export async function submitProspect(userId: string) {
   if (!hasPassport || !hasAddress) {
     return { ok: false as const, reason: "MISSING_DOCS" as const };
   }
+
+  // Compute the brief-completeness score from the draft before it is cleared.
+  const answers = (prospect.draft as Record<string, unknown> | null) ?? {};
+  const services = Array.isArray(prospect.servicesSelected) ? (prospect.servicesSelected as string[]) : [];
+  const completeness = computeCompleteness({ services, answers, docCount: docs.length });
+
   const updated = await prisma.prospect.update({
     where: { id: prospect.id },
-    data: { status: ProspectStatus.pending, draft: undefined },
+    data: { status: ProspectStatus.pending, draft: undefined, completeness },
   });
   await logActivity({
     entityType: "prospect",

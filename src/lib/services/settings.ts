@@ -21,11 +21,17 @@ const DEFAULT_SERVICE_LABELS: Record<string, string> = {
   banking: "Banking",
 };
 
-/** Returns the singleton org row, creating it on first access. */
+/** Returns the singleton org row, creating it on first access. Race-safe: many
+ *  pages may read branding concurrently (e.g. during a build/prerender), so a
+ *  lost create() race falls back to re-reading the now-existing row. */
 export async function getOrgSettings() {
-  let row = await prisma.orgSettings.findUnique({ where: { id: "singleton" } });
-  if (!row) row = await prisma.orgSettings.create({ data: { id: "singleton" } });
-  return row;
+  const existing = await prisma.orgSettings.findUnique({ where: { id: "singleton" } });
+  if (existing) return existing;
+  try {
+    return await prisma.orgSettings.create({ data: { id: "singleton" } });
+  } catch {
+    return (await prisma.orgSettings.findUnique({ where: { id: "singleton" } }))!;
+  }
 }
 
 /** Returns all services in admin sort order. Auto-seeds the hard-coded

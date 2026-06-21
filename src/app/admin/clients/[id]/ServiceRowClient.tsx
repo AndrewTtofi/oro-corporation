@@ -39,29 +39,34 @@ export function ServiceRowClient({ row, partners, taxonomy }: {
   }
 
   return (
-    <div className="border border-admin-border rounded-elem p-4 mb-3 grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
-      <div>
+    <div className="border border-admin-border rounded-elem p-4 mb-3">
+      <div className="flex items-center justify-between gap-3 mb-3">
         <div className="font-semibold">{label}</div>
-        <input value={draft.notes ?? ""} onChange={(e) => setDraft({ ...draft, notes: e.target.value || null })} placeholder="Notes" className="input mt-2 w-full" />
+        <div className="flex gap-2 shrink-0">
+          {dirty && <button type="button" onClick={save} disabled={pending} className="btn btn-primary px-3 py-1.5 text-meta">Save</button>}
+          <button type="button" onClick={remove} disabled={pending} className="btn px-3 py-1.5 text-meta text-[#DC2626]">Remove</button>
+        </div>
       </div>
-      <label className="flex flex-col gap-1">
-        <span className="text-[11px] uppercase tracking-widest text-admin-muted">Status</span>
-        <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ServiceRow["status"] })} className="input">
-          <option value="pending">Pending</option>
-          <option value="in_progress">In progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[11px] uppercase tracking-widest text-admin-muted">Partner</span>
-        <select value={draft.assignedPartnerId ?? ""} onChange={(e) => setDraft({ ...draft, assignedPartnerId: e.target.value || null })} className="input">
-          <option value="">Unassigned</option>
-          {partners.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
-        </select>
-      </label>
-      <div className="flex gap-2 items-end">
-        {dirty && <button type="button" onClick={save} disabled={pending} className="btn btn-primary px-3 py-1.5 text-meta">Save</button>}
-        <button type="button" onClick={remove} disabled={pending} className="btn px-3 py-1.5 text-meta text-[#DC2626]">Remove</button>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-widest text-admin-muted">Status</span>
+          <select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ServiceRow["status"] })} className="input">
+            <option value="pending">Pending</option>
+            <option value="in_progress">In progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-widest text-admin-muted">Partner</span>
+          <select value={draft.assignedPartnerId ?? ""} onChange={(e) => setDraft({ ...draft, assignedPartnerId: e.target.value || null })} className="input">
+            <option value="">Unassigned</option>
+            {partners.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-widest text-admin-muted">Notes</span>
+          <input value={draft.notes ?? ""} onChange={(e) => setDraft({ ...draft, notes: e.target.value || null })} placeholder="Add a note…" className="input w-full" />
+        </label>
       </div>
     </div>
   );

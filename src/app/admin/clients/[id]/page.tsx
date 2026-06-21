@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/guards";
+import { getServices } from "@/lib/services/settings";
 import { Role } from "@prisma/client";
 import { listThread } from "@/lib/services/messages";
 import { AdminClientShell } from "./AdminClientShell";
@@ -57,7 +58,9 @@ export default async function ClientProfilePage({
 
   const partners = await prisma.user.findMany({ where: { role: Role.partner, deactivatedAt: null }, select: { id: true, fullName: true } });
   const staff = await prisma.user.findMany({ where: { role: Role.staff, deactivatedAt: null }, select: { id: true, fullName: true } });
-  const taxonomy = await prisma.service.findMany({ where: { active: true }, select: { key: true, label: true }, orderBy: { sortOrder: "asc" } });
+  // Use getServices() (not a raw query) so the taxonomy lazily seeds when empty —
+  // otherwise service folders fall back to raw snake_case keys.
+  const taxonomy = (await getServices({ activeOnly: true })).map((s) => ({ key: s.key, label: s.label }));
 
   const messages = await listThread(client.id);
 

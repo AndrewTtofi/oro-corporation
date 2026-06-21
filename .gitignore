@@ -34,6 +34,11 @@ Thumbs.db
 
 # Test
 coverage/
+test-results/
 
 # Worktree-local
 .claude/
+.gstack/
+
+# Design reference artifact (kept locally, not in the repo)
+(C) Platform Prototype.html

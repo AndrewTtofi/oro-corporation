@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth/guards";
 import { SubmissionActions } from "./SubmissionActions";
+import { CompletenessChip } from "@/components/admin/CompletenessChip";
+import { computeCompleteness, generateBrief, detailsToMap, type Completeness } from "@/lib/services/prospect-intel";
 import { Role } from "@prisma/client";
 
 export const metadata = { title: "Submission" };
@@ -25,6 +27,14 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const map = Object.fromEntries(prospect.details.map((d) => [d.fieldName, d.fieldValue]));
   const services = Array.isArray(prospect.servicesSelected) ? (prospect.servicesSelected as string[]) : [];
   const assignedPartnerId = ((prospect.draft as Record<string, unknown> | null)?.__assignedPartnerId as string | null | undefined) ?? null;
+
+  // AI-style internal brief + completeness (override wins over the auto score).
+  const answers = detailsToMap(prospect.details);
+  const docCount = prospect.documents.length;
+  const autoCompleteness = (prospect.completeness as Completeness | null)
+    ?? computeCompleteness({ services, answers, docCount });
+  const effectiveCompleteness = (prospect.completenessOverride as Completeness | null) ?? autoCompleteness;
+  const brief = generateBrief({ fullName: map.fullLegalName ?? prospect.user.fullName, services, answers, docCount });
 
   const activity = await prisma.activityLog.findMany({
     where: { entityType: "prospect", entityId: prospect.id },
@@ -50,6 +60,21 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
       <main className="max-w-[1200px] mx-auto px-10 my-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-8">
+          <section className="bg-admin-surface border border-admin-border rounded-elem p-8" style={{ borderColor: "var(--brand)" }}>
+            <div className="flex items-center justify-between mb-4 gap-4">
+              <div className="flex items-center gap-3">
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" /></svg>
+                <h2 className="text-lg font-bold">AI-generated internal brief</h2>
+              </div>
+              <CompletenessChip value={effectiveCompleteness} />
+            </div>
+            <p style={{ fontSize: "0.9375rem", lineHeight: 1.6 }}>{brief}</p>
+            <hr className="hairline" style={{ margin: "16px 0" }} />
+            <p className="text-[12px] text-admin-muted">
+              Auto-drafted from the applicant&apos;s intake answers and documents on file. Adjust the brief-completeness score in the sidebar to reprioritise prep.
+            </p>
+          </section>
+
           <Card title="Personal Information">
             <Grid2>
               <Row label="Full Legal Name" value={map.fullLegalName ?? prospect.user.fullName} />
@@ -117,6 +142,8 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
             prospect={{ id: prospect.id, status: prospect.status, referenceNumber: prospect.referenceNumber }}
             partners={partners}
             assignedPartnerId={assignedPartnerId}
+            completenessOverride={(prospect.completenessOverride as Completeness | null) ?? null}
+            autoCompleteness={autoCompleteness}
             initialNotes={prospect.internalNotes.map((n) => ({
               id: n.id,
               author: n.author.fullName,

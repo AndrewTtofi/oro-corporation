@@ -1,0 +1,92 @@
+version: 2
+updates:
+  # ── npm (application dependencies) ──────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Nicosia"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Group related updates so we get a handful of PRs, not dozens.
+    groups:
+      next:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+          - "@next/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/*"
+      aws-sdk:
+        patterns:
+          - "@aws-sdk/*"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@playwright/test"
+          - "@testcontainers/*"
+      types:
+        patterns:
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+      dev-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      prod-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+    # Security updates still come through individually regardless of grouping.
+
+  # ── GitHub Actions (CI/CD workflow pins) ────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Nicosia"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # ── Docker base images ──────────────────────────────────────────────
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Nicosia"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker"

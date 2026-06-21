@@ -1,0 +1,32 @@
+name: notify-discord
+
+# Posts a plain-language "what changed" summary to Discord after a successful
+# production deploy. Runs only when the deploy-oro workflow finishes successfully.
+# A notification failure never affects the deploy (this workflow is separate).
+
+on:
+  workflow_run:
+    workflows: ["deploy-oro"]
+    types: [completed]
+
+jobs:
+  notify:
+    name: Post deploy summary to Discord
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Notify Discord
+        env:
+          DISCORD_DEPLOY_WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
+          DEPLOY_BRAND_NAME: ORO
+          SITE_URL: http://185.106.101.11
+          DEPLOY_ACTOR: ${{ github.event.workflow_run.actor.login }}
+          DEPLOY_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/notify-deploy.mjs

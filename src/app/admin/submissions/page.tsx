@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { CompletenessChip } from "@/components/admin/CompletenessChip";
 import { prisma } from "@/lib/db";
 import { ProspectStatus } from "@prisma/client";
+import type { Completeness } from "@/lib/services/prospect-intel";
 
 export const metadata = { title: "Submissions" };
 
@@ -88,6 +90,7 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
                 <Th>Applicant</Th>
                 <Th>Services</Th>
                 <Th>Country</Th>
+                <Th>Brief</Th>
                 <Th>Submitted</Th>
                 <Th>Status</Th>
               </tr>
@@ -95,7 +98,7 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-16 text-center">
+                  <td colSpan={7} className="p-16 text-center">
                     <p className="mb-2" style={{ fontSize: "1.125rem", fontWeight: 600 }}>No submissions match.</p>
                     <p className="text-[13px] text-muted">
                       Try a different filter, or wait for the next application to arrive.
@@ -142,6 +145,12 @@ export default async function AdminSubmissionsPage({ searchParams }: PageProps) 
                       </div>
                     </Td>
                     <Td className="font-mono figure text-[12px] uppercase tracking-[0.12em] text-muted">{country}</Td>
+                    <Td>
+                      {(() => {
+                        const eff = (p.completenessOverride ?? p.completeness) as Completeness | null;
+                        return eff ? <CompletenessChip value={eff} /> : <span className="text-muted">—</span>;
+                      })()}
+                    </Td>
                     <Td className="font-mono figure text-[12px] text-muted">
                       {p.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                     </Td>

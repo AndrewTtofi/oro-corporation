@@ -17,17 +17,22 @@ const INFO_CHECKLIST = [
   "Director's CV / résumé",
 ];
 
+type Comp = "low" | "med" | "high";
+
 export function SubmissionActions({
-  prospect, partners, assignedPartnerId, initialNotes, activity,
+  prospect, partners, assignedPartnerId, initialNotes, activity, completenessOverride, autoCompleteness,
 }: {
   prospect: ProspectLite;
   partners: Partner[];
   assignedPartnerId: string | null;
   initialNotes: NoteRow[];
   activity: ActivityRow[];
+  completenessOverride: Comp | null;
+  autoCompleteness: Comp;
 }) {
   const [status, setStatus] = useState<ProspectStatus>(prospect.status);
   const [partnerId, setPartnerId] = useState<string | null>(assignedPartnerId);
+  const [override, setOverride] = useState<Comp | null>(completenessOverride);
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState<NoteRow[]>(initialNotes);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -53,6 +58,16 @@ export function SubmissionActions({
       setStatus(target);
       router.refresh();
     });
+  }
+
+  async function setCompleteness(value: Comp | null) {
+    setOverride(value);
+    await fetch(`/api/admin/submissions/${prospect.id}/completeness`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completeness: value }),
+    });
+    router.refresh();
   }
 
   async function reassignPartner(id: string | null) {
@@ -150,6 +165,34 @@ export function SubmissionActions({
           <option value="">Unassigned</option>
           {partners.map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}
         </select>
+      </section>
+
+      <section className="bg-admin-surface border border-admin-border rounded-elem p-6">
+        <div className="text-meta font-bold mb-1">Brief completeness</div>
+        <p className="text-[11px] text-admin-muted mb-3">
+          Auto score: <strong>{({ low: "Low", med: "Medium", high: "High" } as const)[autoCompleteness]}</strong>. Override to reprioritise prep.
+        </p>
+        <div className="flex gap-2">
+          {(["low", "med", "high"] as const).map((c) => {
+            const active = (override ?? autoCompleteness) === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => void setCompleteness(c)}
+                className="flex-1 py-2 rounded-inner text-meta font-medium"
+                style={{ border: "1px solid var(--border-strong-color)", background: active ? "var(--brand)" : "var(--surface)", color: active ? "#fff" : "var(--text-muted)" }}
+              >
+                {c === "low" ? "Low" : c === "med" ? "Medium" : "High"}
+              </button>
+            );
+          })}
+        </div>
+        {override && (
+          <button type="button" onClick={() => void setCompleteness(null)} className="mt-3 text-[11px] text-admin-muted underline">
+            Clear override (use auto score)
+          </button>
+        )}
       </section>
 
       <section className="bg-admin-surface border border-admin-border rounded-elem p-6">

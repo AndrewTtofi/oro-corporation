@@ -478,3 +478,85 @@
   .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.75rem; margin: 20px 0; }
   .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 }
+
+/* =====================================================================
+   Platform-prototype components ported for the new interface
+   (tools, CRM, compliance calendar, AML, branding, AI brief).
+   Plain CSS so it reliably layers over the Tailwind/base rules above.
+   ===================================================================== */
+
+/* icons rendered standalone (sized via descendant selectors elsewhere) */
+.ic { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; }
+.ic-24 { width: 24px; height: 24px; }
+.ic-18 { width: 18px; height: 18px; }
+.ic-16 { width: 16px; height: 16px; }
+
+/* layout utilities */
+.muted { color: var(--text-muted); }
+.row { display: flex; align-items: center; gap: var(--space-3); }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.stack { display: flex; flex-direction: column; }
+.grow { flex: 1; }
+.right { margin-left: auto; }
+.center { text-align: center; }
+.wrap { flex-wrap: wrap; }
+.container { max-width: var(--container-max); margin: 0 auto; }
+.grid-2 { display: grid; gap: var(--space-6); grid-template-columns: repeat(2, 1fr); }
+.grid-3 { display: grid; gap: var(--space-6); grid-template-columns: repeat(3, 1fr); }
+.grid-4 { display: grid; gap: var(--space-6); grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+/* forms */
+.field { margin-bottom: var(--space-4); }
+.field label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.req { color: var(--danger); }
+
+/* completeness meter */
+.completeness { display: inline-flex; align-items: center; gap: 6px; font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.completeness .bars { display: inline-flex; gap: 2px; }
+.completeness .bars i { width: 5px; height: 11px; border-radius: 1px; background: var(--border-strong-color); display: inline-block; }
+.completeness.low .bars i:nth-child(1) { background: var(--danger); }
+.completeness.med .bars i:nth-child(1), .completeness.med .bars i:nth-child(2) { background: var(--warning); }
+.completeness.high .bars i { background: var(--success); }
+.completeness.low { color: var(--danger); }
+.completeness.med { color: var(--warning); }
+.completeness.high { color: var(--success); }
+
+/* KPI extras (kpi/.kpi-value/.kpi-tile already defined) */
+.kpi-top { display: flex; align-items: flex-start; justify-content: space-between; }
+
+/* table extras */
+.tbl-toolbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+.cell-entity { display: flex; align-items: center; gap: 10px; }
+.cell-entity .sub, .sub { font-size: 0.6875rem; color: var(--text-muted); }
+.tbl-foot { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border-color); font-size: 0.75rem; color: var(--text-muted); }
+
+/* filter chips container + free-tool chips */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.jchips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: var(--space-5); }
+.jchip { border: 1px solid var(--border-strong-color); background: var(--surface); border-radius: var(--radius-pill); padding: 6px 14px; font-size: 0.875rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-colors); color: var(--text); }
+.jchip.on { background: var(--brand-50); border-color: var(--brand); color: var(--brand); font-weight: 500; }
+
+/* tax calculator */
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
+@media (max-width: 780px) { .calc-grid { grid-template-columns: 1fr; } }
+.calc-result { background: var(--brand); color: #fff; border-radius: var(--radius-lg); padding: var(--space-8); }
+.calc-result .big { font-family: var(--font-mono); font-size: 3.052rem; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+.calc-result .lbl { color: rgba(255,255,255,.75); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .05em; }
+.calc-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.18); font-size: 0.875rem; }
+.calc-row .num { color: #fff; }
+.gated { position: relative; }
+.gated.locked .blurme { filter: blur(7px); pointer-events: none; user-select: none; }
+.gate-over { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--space-6); }
+.gate-card { background: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: var(--space-6); max-width: 340px; text-align: center; }
+
+/* empty state */
+.empty { max-width: 360px; margin: 0 auto; text-align: center; padding: var(--space-12) 0; }
+.empty .ec { width: 72px; height: 72px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; margin: 0 auto var(--space-4); }
+.empty .ec svg { width: 32px; height: 32px; color: var(--text-muted); }
+.empty h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: var(--space-2); }
+.empty p { color: var(--text-muted); font-size: 0.875rem; }
+
+/* misc spacing helpers used by ported markup (Tailwind covers most mt-/mb-/gap-) */
+.mono { font-variant-numeric: tabular-nums; }

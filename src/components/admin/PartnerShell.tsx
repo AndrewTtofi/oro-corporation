@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
+import { getBranding } from "@/lib/services/branding";
 
-export function PartnerShell({
+export async function PartnerShell({
   children, active,
 }: {
   children: React.ReactNode;
   active: "clients" | "settings";
 }) {
+  const { brandName } = await getBranding();
   return (
     <div className="shell-partner min-h-screen grid grid-cols-1 lg:grid-cols-[260px_1fr]">
       <aside
@@ -15,7 +17,7 @@ export function PartnerShell({
       >
         <Link href="/partner" className="group block">
           <div className="font-display text-[26px] leading-none tracking-[-0.02em] text-accent">
-            ORO
+            {brandName}
           </div>
           <div className="mt-2 font-mono text-[9.5px] tracking-[0.32em] uppercase text-bone/45">
             Partner&nbsp;·&nbsp;Counsel

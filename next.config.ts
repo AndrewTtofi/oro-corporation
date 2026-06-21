@@ -4,6 +4,8 @@ const config: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  // Hide the floating dev-tools badge (it overlapped the sidebar "Log out").
+  devIndicators: false,
   experimental: {
     serverActions: {
       bodySizeLimit: "12mb", // 10MB doc upload + headroom

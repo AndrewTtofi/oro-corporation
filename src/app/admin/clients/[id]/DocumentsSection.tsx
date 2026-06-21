@@ -18,10 +18,12 @@ export function DocumentsSection({
   services: { serviceType: string }[];
   taxonomy: { key: string; label: string }[];
 }) {
+  const humanize = (key: string) =>
+    key.replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const labelFor = (key: string) => {
     if (key === BUCKET_KYC) return "KYC Documents";
     if (key === BUCKET_CORRESPONDENCE) return "Correspondence";
-    return taxonomy.find((t) => t.key === key)?.label ?? key;
+    return taxonomy.find((t) => t.key === key)?.label ?? humanize(key);
   };
 
   const folderKeys = Array.from(
