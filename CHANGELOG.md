@@ -10,6 +10,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Added — Super-admin plan control
+- The plan tier is now operator-controlled. A "super admin" (the platform/code owner) is designated by the `SUPER_ADMIN_EMAILS` env allowlist (set at deploy time). Only a super admin can change the plan tier from **Settings → Branding & plan**; tenant staff see the tier read-only ("managed by your platform provider"). Enforced server-side in `PATCH /api/admin/settings/org` (403 otherwise), not just hidden in the UI. Branding (name/colour/theme) remains staff-editable. Helpers `isSuperAdmin()` / `currentIsSuperAdmin()` in `src/lib/auth/guards.ts`.
+
 ### Changed — Repository renamed to `fiduciary-software`
 - Renamed the GitHub repo `oro-corporation` → `fiduciary-software`. CI derives the GHCR image path from the repo name automatically; updated the one hardcoded image reference in `deploy/deploy-oro.sh` to `ghcr.io/andrewttofi/fiduciary-software:latest` so deploys keep matching the freshly-built image. Updated clone/wiki URLs in the README and getting-started docs. GitHub redirects keep old URLs working.
 

@@ -40,6 +40,9 @@ STORAGE_LOCAL_DIR=/data/docs
 EMAIL_DRIVER=console
 SMTP_FROM=no-reply@oro.local
 SEED_ON_BOOT=false
+# Super admin (platform operator). Set to the code owner's email(s) to allow
+# changing the plan tier from the admin UI. Empty = plan locked.
+SUPER_ADMIN_EMAILS=
 ENV
   chmod 600 .env
   echo "[deploy] generated new .env"

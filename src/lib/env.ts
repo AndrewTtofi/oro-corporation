@@ -53,6 +53,10 @@ const schema = z.object({
   // App behavior
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   SEED_ON_BOOT: z.coerce.boolean().default(false),
+
+  // Super admin = the platform operator (code owner). Comma-separated emails.
+  // Only these users can change the plan tier; left empty, no one can via the UI.
+  SUPER_ADMIN_EMAILS: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

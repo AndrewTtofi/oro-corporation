@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { assertRole } from "@/lib/auth/guards";
+import { assertRole, isSuperAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -20,11 +20,16 @@ const schema = z.object({
 });
 
 export async function PATCH(req: Request) {
-  await assertRole("staff");
+  const user = await assertRole("staff");
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 422 });
   const p = parsed.data;
+
+  // The plan tier is operator-controlled: only a super admin may change it.
+  if (p.planTier !== undefined && !isSuperAdmin(user)) {
+    return NextResponse.json({ error: "Only a super admin can change the plan tier." }, { status: 403 });
+  }
 
   // Only persist keys that were actually sent, so the organization and branding
   // forms can each PATCH their own subset without clobbering the other.

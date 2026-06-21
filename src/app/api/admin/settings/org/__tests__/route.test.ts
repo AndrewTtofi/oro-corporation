@@ -74,11 +74,41 @@ describe("admin/settings/org PATCH", () => {
       const staff = await createStaff(tx);
       sessionState.user = { id: staff.id, email: staff.email, fullName: staff.fullName, role: "staff" };
       const { PATCH } = await loadRoute(tx);
-      const res = await PATCH(makeReq({ method: "PATCH", body: { planTier: "scale", themePreset: "emerald" } }));
+      const res = await PATCH(makeReq({ method: "PATCH", body: { brandName: "Meridian", themePreset: "emerald" } }));
       expect(res.status).toBe(200);
       const row = await tx.orgSettings.findUnique({ where: { id: "singleton" } });
-      expect(row?.planTier).toBe("scale");
+      expect(row?.brandName).toBe("Meridian");
       expect(row?.themePreset).toBe("emerald");
+    });
+  });
+
+  it("plan tier change by non-super-admin → 403", async () => {
+    delete process.env.SUPER_ADMIN_EMAILS;
+    await inRollbackTx(prisma, async (rawTx) => {
+      const tx = wrapTx(rawTx);
+      const staff = await createStaff(tx);
+      sessionState.user = { id: staff.id, email: staff.email, fullName: staff.fullName, role: "staff" };
+      const { PATCH } = await loadRoute(tx);
+      const res = await PATCH(makeReq({ method: "PATCH", body: { planTier: "scale" } }));
+      expect(res.status).toBe(403);
+    });
+  });
+
+  it("plan tier change by super admin → 200", async () => {
+    await inRollbackTx(prisma, async (rawTx) => {
+      const tx = wrapTx(rawTx);
+      const staff = await createStaff(tx);
+      sessionState.user = { id: staff.id, email: staff.email, fullName: staff.fullName, role: "staff" };
+      process.env.SUPER_ADMIN_EMAILS = staff.email;
+      try {
+        const { PATCH } = await loadRoute(tx);
+        const res = await PATCH(makeReq({ method: "PATCH", body: { planTier: "scale" } }));
+        expect(res.status).toBe(200);
+        const row = await tx.orgSettings.findUnique({ where: { id: "singleton" } });
+        expect(row?.planTier).toBe("scale");
+      } finally {
+        delete process.env.SUPER_ADMIN_EMAILS;
+      }
     });
   });
 
