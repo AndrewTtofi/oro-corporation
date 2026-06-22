@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    // TS 6 deprecates `baseUrl` and `moduleResolution: node` (node10), both of
+    // which the worker build relies on (tsc-alias rewrites `@/*` from baseUrl).
+    // Silence the deprecation through TS 6; revisit when modernising the worker
+    // build for TS 7.
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "node",

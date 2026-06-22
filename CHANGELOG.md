@@ -10,6 +10,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Fixed — Worker Docker build broken under TypeScript 6
+- `tsconfig.worker.json` still used `baseUrl` and `moduleResolution: node` (node10), which TS 6 flags as errors (TS5101 / TS5107). The TS 6 bump only updated `tsconfig.json`, so `npm run worker:build` in the Dockerfile failed — breaking the `Build Docker image` CI job and blocking all production deploys. Added `"ignoreDeprecations": "6.0"` to the worker config (the worker build depends on `baseUrl` for `tsc-alias`); behaviour is unchanged.
+
 ### Changed — Upgrade TypeScript to 6.0
 - Bumped `typescript` 5.9 → 6.0.3. Removed the deprecated `baseUrl` from `tsconfig.json` (TS 6 deprecates it, TS 7 removes it); the `@/*` path mapping resolves fine without it since all source imports are either `@/*` or real packages. Added `src/types/assets.d.ts` declaring `*.css` to satisfy TS 6's stricter side-effect-import checking (TS2882) for `import "./globals.css"`.
 
