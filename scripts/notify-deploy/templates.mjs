@@ -28,8 +28,54 @@ export const CATEGORY_TO_GROUP = {
 
 const MAX_ITEMS_PER_GROUP = 6;
 
+/* ── Forum tag taxonomy ───────────────────────────────────────────────
+   Create ONE forum tag per entry below in the Discord forum channel
+   (name them however you like — the labels here are suggestions). Then put
+   their tag IDs in the `DEPLOY_FORUM_TAGS` GitHub Actions *variable* as JSON
+   keyed by these keys, e.g.:
+     {"new":"123","improved":"456","fixed":"789",
+      "deps":"234","security":"567","internal":"890"}
+   Each deploy auto-applies only the tags whose changes are in that deploy.   */
+export const TAGS = {
+  new:      { key: "new",      label: "✨ New" },
+  improved: { key: "improved", label: "🛠️ Improvement" },
+  fixed:    { key: "fixed",    label: "🐛 Fix" },
+  deps:     { key: "deps",     label: "📦 Dependencies" },
+  security: { key: "security", label: "🔒 Security" },
+  internal: { key: "internal", label: "🔧 Internal" },
+};
+
+/** Classify a changelog `###` heading into a single forum-tag key.
+    Keyword-first (handles "Changed — Bump …" → deps, "Fixed — …" → fix),
+    then falls back to the leading category word. */
+export function classifyTag(heading) {
+  const h = (heading || "").toLowerCase();
+  if (/\b(security|vuln|cve|xss|csrf|injection)\b/.test(h)) return "security";
+  if (/\b(bump|upgrade|upgraded|dependenc\w*|deps|lockfile)\b/.test(h)) return "deps";
+  if (/\b(fix|fixed|bug|bugfix|hotfix|regression)\b/.test(h)) return "fixed";
+  const cat = h.split(/\s+[—–-]\s+/)[0].trim().split(/\s+/)[0];
+  if (["added", "feature", "feat", "new"].includes(cat)) return "new";
+  if (["chore", "docs", "doc", "test", "tests", "ci", "build", "tooling"].includes(cat)) return "internal";
+  if (["fixed", "fix", "bugfix", "hotfix"].includes(cat)) return "fixed";
+  // changed / improved / perf / refactor / ui / removed / deprecated / …
+  return "improved";
+}
+
+/** Resolve the set of present tag keys to Discord forum tag IDs.
+    Reads the DEPLOY_FORUM_TAGS JSON map; returns up to 5 IDs (Discord's cap). */
+export function resolveForumTagIds(presentKeys, rawJson) {
+  let map = {};
+  try { map = JSON.parse(rawJson || "{}"); } catch { map = {}; }
+  const ids = [];
+  for (const key of presentKeys) {
+    const id = map[key];
+    if (id) ids.push(String(id));
+  }
+  return [...new Set(ids)].slice(0, 5);
+}
+
 /** Build the Discord payload for a successful deploy. */
-export function deploySuccessEmbed({ brand, groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
+export function deploySuccessEmbed({ groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
   const sections = [];
   for (const g of Object.values(GROUPS)) {
     const items = groups[g.key] ?? [];
@@ -48,16 +94,16 @@ export function deploySuccessEmbed({ brand, groups, internalCount, version, shor
     sections.push(`_Plus ${internalCount} behind-the-scenes ${internalCount === 1 ? "update" : "updates"} (security, tooling, tests)._`);
   }
 
-  let description = `A new version of **${brand}** is now live. Here's what changed:\n\n${sections.join("\n\n")}`;
+  let description = `A new deploy is live. Here's what changed:\n\n${sections.join("\n\n")}`;
   if (description.length > 4000) description = description.slice(0, 3990) + "\n…";
 
   const footerBits = [version && `${version}`, shortSha && `build ${shortSha}`, actor && `deployed by ${actor}`].filter(Boolean);
 
   return {
-    username: `${brand} Updates`,
+    username: "Platform Updates",
     embeds: [
       {
-        title: `🚀 ${brand} just got an update`,
+        title: "🚀 The platform just got an update",
         url: siteUrl || undefined,
         description,
         color: BRAND_COLOR,
@@ -70,12 +116,12 @@ export function deploySuccessEmbed({ brand, groups, internalCount, version, shor
 }
 
 /** Minimal payload for a failed deploy (used by the workflow's failure path). */
-export function deployFailedEmbed({ brand, actor, runUrl, shortSha }) {
+export function deployFailedEmbed({ actor, runUrl, shortSha }) {
   return {
-    username: `${brand} Updates`,
+    username: "Platform Updates",
     embeds: [
       {
-        title: `⚠️ ${brand} deploy needs attention`,
+        title: "⚠️ Platform deploy needs attention",
         description: "A deployment did not finish successfully. The site may still be on the previous version. An engineer should take a look.",
         color: 0xb42318,
         fields: runUrl ? [{ name: "​", value: `[View the failed run](${runUrl})`, inline: false }] : undefined,

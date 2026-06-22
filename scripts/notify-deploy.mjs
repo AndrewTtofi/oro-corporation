@@ -12,7 +12,6 @@
 
    Env:
      DISCORD_DEPLOY_WEBHOOK   Discord webhook URL (required to actually post)
-     DEPLOY_BRAND_NAME        Brand shown in the message      (default "ORO")
      SITE_URL                 Link to the live site           (default prod IP)
      DEPLOY_ACTOR             Who triggered the deploy        (optional)
      DEPLOY_RUN_URL           Link to the CI run              (optional)
@@ -22,14 +21,13 @@ import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { CATEGORY_TO_GROUP, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
+import { CATEGORY_TO_GROUP, classifyTag, resolveForumTagIds, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const FAILED = args.includes("--failed");
 
-const BRAND = process.env.DEPLOY_BRAND_NAME || "ORO";
 const SITE_URL = process.env.SITE_URL || "http://185.106.101.11";
 const WEBHOOK = process.env.DISCORD_DEPLOY_WEBHOOK || "";
 
@@ -45,29 +43,16 @@ function clean(s) {
     .trim();
 }
 
-/* ── read the most recent CHANGELOG section into friendly groups ──────── */
-function parseChangelog() {
+/* ── turn a block of changelog lines into friendly groups + present tags ─ */
+function parseSectionLines(section) {
   const groups = { new: [], improved: [], fixed: [] };
+  const tagKeys = new Set();          // forum-tag keys present in this block
   let internalCount = 0;
-  let text = "";
-  try {
-    text = readFileSync(join(root, "CHANGELOG.md"), "utf8");
-  } catch {
-    return { groups, internalCount };
-  }
 
-  const lines = text.split("\n");
-  // Grab everything from the first "## " heading to the next "## " heading.
-  const start = lines.findIndex((l) => /^##\s+/.test(l));
-  if (start === -1) return { groups, internalCount };
-  let end = lines.findIndex((l, i) => i > start && /^##\s+/.test(l));
-  if (end === -1) end = lines.length;
-  const section = lines.slice(start + 1, end);
-
-  let curGroup = null;          // friendly group for the current ### subsection
+  let curGroup = null;          // friendly display group for the current ### subsection
   let curTitle = null;          // the "— Title" of the current subsection, if any
   let curBullets = [];          // bullets collected under the current subsection
-  let curMapped = false;        // was the current ### category recognised?
+  let curMapped = false;        // was the current ### category recognised for display?
 
   const flush = () => {
     if (!curMapped) {
@@ -91,6 +76,7 @@ function parseChangelog() {
       curGroup = CATEGORY_TO_GROUP[cat] ?? null;
       curMapped = !!curGroup;
       curTitle = titleParts.length ? titleParts.join(" - ").trim() : null;
+      tagKeys.add(classifyTag(heading));    // tags are finer-grained than display groups
       continue;
     }
     if (/^\s*[-*]\s+/.test(raw)) curBullets.push(raw);
@@ -102,7 +88,42 @@ function parseChangelog() {
     const seen = new Set();
     groups[k] = groups[k].filter((x) => x && !seen.has(x) && seen.add(x));
   }
-  return { groups, internalCount };
+  return { groups, internalCount, tagKeys };
+}
+
+/* ── the most recent CHANGELOG section (## Unreleased) ─────────────────── */
+function parseChangelogFull() {
+  let text = "";
+  try { text = readFileSync(join(root, "CHANGELOG.md"), "utf8"); } catch { return parseSectionLines([]); }
+  const lines = text.split("\n");
+  const start = lines.findIndex((l) => /^##\s+/.test(l));
+  if (start === -1) return parseSectionLines([]);
+  let end = lines.findIndex((l, i) => i > start && /^##\s+/.test(l));
+  if (end === -1) end = lines.length;
+  return parseSectionLines(lines.slice(start + 1, end));
+}
+
+/* ── ONLY this deploy's CHANGELOG additions (delta since the last deploy) ─
+   Diffs CHANGELOG.md between the previously-deployed commit and this one and
+   parses just the added (`+`) lines, so each post shows only what that deploy
+   shipped. Returns null when the range is unknown/empty so the caller can fall
+   back to the full section. */
+function parseChangelogDelta(prevSha, headSha) {
+  if (!prevSha || !headSha) return null;
+  let diff = "";
+  try {
+    diff = execSync(
+      `git diff ${prevSha}..${headSha} -- CHANGELOG.md`,
+      { cwd: root, stdio: ["ignore", "pipe", "ignore"] }
+    ).toString();
+  } catch { return null; }
+  const added = diff
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+    .map((l) => l.slice(1));
+  // Need at least one recognisable heading or bullet to trust the delta.
+  if (!added.some((l) => /^###\s+/.test(l) || /^\s*[-*]\s+/.test(l))) return null;
+  return parseSectionLines(added);
 }
 
 function gitShort() {
@@ -134,28 +155,35 @@ async function post(payload) {
 async function main() {
   const shortSha = gitShort();
   const version = pkgVersion();
-  const common = { brand: BRAND, actor: process.env.DEPLOY_ACTOR || "", runUrl: process.env.DEPLOY_RUN_URL || "", shortSha };
+  const common = { actor: process.env.DEPLOY_ACTOR || "", runUrl: process.env.DEPLOY_RUN_URL || "", shortSha };
 
   let payload, threadName;
   if (FAILED) {
     payload = deployFailedEmbed(common);
-    threadName = `${BRAND} deploy failed · ${shortSha || version}`;
+    threadName = `Platform deploy failed · ${shortSha || version}`;
   } else {
-    const { groups, internalCount } = parseChangelog();
-    // Fallback: if the changelog yielded nothing, use the latest commit subject.
+    // Prefer ONLY this deploy's CHANGELOG additions (delta since the last
+    // deploy); fall back to the full Unreleased section if the range is unknown.
+    const delta = parseChangelogDelta(process.env.PREV_DEPLOY_SHA, process.env.DEPLOY_SHA || shortSha);
+    const { groups, internalCount, tagKeys } = delta ?? parseChangelogFull();
+    // Fallback: if nothing parsed at all, use the latest commit subject.
     if (!groups.new.length && !groups.improved.length && !groups.fixed.length && internalCount === 0) {
       try { groups.improved.push(clean(execSync("git log -1 --pretty=%s", { cwd: root }).toString())); } catch { /* noop */ }
     }
     payload = deploySuccessEmbed({ ...common, groups, internalCount, version, siteUrl: SITE_URL, when: new Date().toISOString() });
-    threadName = `${BRAND} update · ${shortSha || version}`;
+    threadName = `Platform update · ${shortSha || version}`;
+
+    // Forum tags: auto-apply only the tags for change-types in this deploy.
+    const autoTagIds = resolveForumTagIds([...(tagKeys ?? [])], process.env.DEPLOY_FORUM_TAGS);
+    if (autoTagIds.length) payload.applied_tags = autoTagIds;
   }
 
   // Forum channels require a thread_name (each deploy becomes its own post).
   payload.thread_name = threadName.slice(0, 100);
   if (process.env.DEPLOY_NOTE) payload.content = process.env.DEPLOY_NOTE;
-  // Optional: auto-apply forum tags by ID (comma-separated) once they exist.
-  const tagIds = (process.env.DEPLOY_TAG_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
-  if (tagIds.length) payload.applied_tags = tagIds;
+  // Manual override: explicit forum tag IDs (comma-separated) win if provided.
+  const manualTagIds = (process.env.DEPLOY_TAG_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (manualTagIds.length) payload.applied_tags = manualTagIds;
   await post(payload);
 }
 
