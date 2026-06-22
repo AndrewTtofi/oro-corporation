@@ -1,7 +1,8 @@
 import { PrismaClient, Role, ProspectStatus, DocType, DocStatus, ClientStatus, SvcStatus, KeyDateStatus, BookingStatus } from "@prisma/client";
 import argon2 from "argon2";
+import { pgAdapter } from "@/lib/prisma-adapter";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: pgAdapter() });
 
 /**
  * Idempotent demo seed: 1 staff, 1 partner, 3 prospects in different statuses,

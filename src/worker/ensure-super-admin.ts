@@ -1,7 +1,8 @@
 import { PrismaClient, Role } from "@prisma/client";
 import argon2 from "argon2";
+import { pgAdapter } from "@/lib/prisma-adapter";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: pgAdapter() });
 
 /**
  * Idempotent provisioning of the platform super-admin account(s) from env.

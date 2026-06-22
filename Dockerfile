@@ -43,10 +43,13 @@ COPY --from=builder --chown=oro:oro /app/.next/standalone ./
 COPY --from=builder --chown=oro:oro /app/.next/static ./.next/static
 COPY --from=builder --chown=oro:oro /app/public ./public
 
-# Prisma artifacts for `prisma migrate deploy` at boot + worker bundle.
+# Prisma artifacts for `prisma migrate deploy` / `db push` at boot + worker
+# bundle. Prisma 7 reads the connection URL from prisma.config.ts (the schema no
+# longer carries it), so the config file must be present in the runtime image.
 # The worker (node-cron, nodemailer, argon2, …) is not traced by next build's
 # standalone output, so ship the full production node_modules alongside it.
 COPY --from=builder --chown=oro:oro /app/prisma ./prisma
+COPY --from=builder --chown=oro:oro /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=oro:oro /app/node_modules ./node_modules
 COPY --from=builder --chown=oro:oro /app/dist-worker ./dist-worker
 
