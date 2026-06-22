@@ -8,11 +8,12 @@ plain-language "what changed" summary to Discord. It is written for non-engineer
 - `.github/workflows/notify.yml` runs when the **Deploy to production** workflow finishes
   successfully. It resolves the previous successful deploy's commit and runs
   `scripts/notify-deploy.mjs`.
-- The script posts **only that deploy's changes** — it diffs `CHANGELOG.md`
-  between the previously-deployed commit (`PREV_DEPLOY_SHA`) and the current one,
-  and shows just the entries added in this deploy. On the very first run, or if
-  the range is unknown, it falls back to the top `## <version>` section of the
-  changelog (release-please-managed).
+- The script posts **only that deploy's changes** — it reads the Conventional
+  Commits between the previously-deployed commit (`PREV_DEPLOY_SHA`) and the
+  current one and groups them. (CHANGELOG.md is release-please-managed and only
+  changes on releases, so commits — not the changelog — drive per-deploy
+  summaries.) On the very first run, or if the range is empty, it falls back to
+  the changelog delta, then the top section.
 - Entries are grouped into **✨ New / 🛠️ Improvements / 🐛 Fixes** in the body.
 - The post is prefixed with **inline change-type labels** — plain text such as
   `📦 Dependencies · 🐛 Fix` — derived from each entry's heading. These need **no

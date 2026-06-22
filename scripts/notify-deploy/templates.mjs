@@ -63,6 +63,34 @@ export function tagLabels(tagKeys) {
   return Object.keys(TAGS).filter((k) => present.has(k)).map((k) => TAGS[k].label);
 }
 
+// Map a change-type key to its body display group (✨New / 🛠️Improvements /
+// 🐛Fixes). null = behind-the-scenes (counted, not listed as a bullet).
+export const TAG_TO_GROUP = {
+  new: "new", improved: "improved", fixed: "fixed",
+  deps: "improved", security: "fixed", internal: null,
+};
+
+/** Classify a Conventional-Commit subject ("feat(x): …") into a change-type key.
+    Falls back to keyword matching for non-conventional subjects. */
+export function classifyCommit(subject) {
+  const m = (subject || "").match(/^(\w+)(?:\([^)]*\))?(!)?:/);
+  const type = m ? m[1].toLowerCase() : "";
+  if (m && m[2]) return type === "fix" ? "fixed" : type === "feat" ? "new" : "improved"; // breaking
+  const byType = {
+    feat: "new", feature: "new",
+    fix: "fixed", revert: "fixed",
+    perf: "improved", refactor: "improved",
+    deps: "deps",
+    docs: "internal", chore: "internal", ci: "internal", build: "internal", test: "internal", style: "internal",
+  }[type];
+  return byType ?? classifyTag(subject);
+}
+
+/** Strip the Conventional-Commit prefix from a subject for display. */
+export function commitDescription(subject) {
+  return (subject || "").replace(/^\w+(?:\([^)]*\))?!?:\s*/, "").trim();
+}
+
 /** Build the Discord payload for a successful deploy. */
 export function deploySuccessEmbed({ company, labels, groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
   // White-label: when a company name is configured, the post is branded for

@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { CATEGORY_TO_GROUP, classifyTag, tagLabels, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
+import { CATEGORY_TO_GROUP, classifyTag, classifyCommit, commitDescription, TAG_TO_GROUP, tagLabels, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -110,6 +110,42 @@ function parseChangelogFull() {
   return parseSectionLines(lines.slice(start + 1, end));
 }
 
+/* ── ONLY this deploy's changes, derived from the COMMITS in the range ───
+   This is the primary source: each deploy summarises the Conventional Commits
+   between the previously-deployed commit and this one. (CHANGELOG.md is owned
+   by release-please and only changes on releases, so it can't drive per-deploy
+   summaries.) Returns null when the range yields no commits. */
+function parseCommitsDelta(prevSha, headSha) {
+  if (!prevSha || !headSha) return null;
+  let raw = "";
+  try {
+    raw = execSync(
+      `git log ${prevSha}..${headSha} --no-merges --pretty=format:%s`,
+      { cwd: root, stdio: ["ignore", "pipe", "ignore"] }
+    ).toString();
+  } catch { return null; }
+  const subjects = raw.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (!subjects.length) return null;
+
+  const groups = { new: [], improved: [], fixed: [] };
+  const tagKeys = new Set();
+  let internalCount = 0;
+  for (const subj of subjects) {
+    const tag = classifyCommit(subj);
+    tagKeys.add(tag);
+    const group = TAG_TO_GROUP[tag];
+    const desc = clean(commitDescription(subj));
+    if (group && desc) groups[group].push(desc);
+    else internalCount += 1;
+  }
+  // de-dupe while preserving order
+  for (const k of Object.keys(groups)) {
+    const seen = new Set();
+    groups[k] = groups[k].filter((x) => x && !seen.has(x) && seen.add(x));
+  }
+  return { groups, internalCount, tagKeys };
+}
+
 /* ── ONLY this deploy's CHANGELOG additions (delta since the last deploy) ─
    Diffs CHANGELOG.md between the previously-deployed commit and this one and
    parses just the added (`+`) lines, so each post shows only what that deploy
@@ -170,10 +206,13 @@ async function main() {
     payload = deployFailedEmbed(common);
     threadName = `${who} deploy failed · ${shortSha || version}`;
   } else {
-    // Prefer ONLY this deploy's CHANGELOG additions (delta since the last
-    // deploy); fall back to the full Unreleased section if the range is unknown.
-    const delta = parseChangelogDelta(process.env.PREV_DEPLOY_SHA, process.env.DEPLOY_SHA || shortSha);
-    const { groups, internalCount, tagKeys } = delta ?? parseChangelogFull();
+    // Summarise THIS deploy from its commits (primary). Fall back to the
+    // CHANGELOG delta, then the latest changelog section, if there are no
+    // commits in range (e.g. the very first run).
+    const prev = process.env.PREV_DEPLOY_SHA;
+    const head = process.env.DEPLOY_SHA || shortSha;
+    const { groups, internalCount, tagKeys } =
+      parseCommitsDelta(prev, head) ?? parseChangelogDelta(prev, head) ?? parseChangelogFull();
     // Fallback: if nothing parsed at all, use the latest commit subject.
     if (!groups.new.length && !groups.improved.length && !groups.fixed.length && internalCount === 0) {
       try { groups.improved.push(clean(execSync("git log -1 --pretty=%s", { cwd: root }).toString())); } catch { /* noop */ }

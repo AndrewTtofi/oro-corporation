@@ -129,9 +129,11 @@ and you must **not hand-edit `CHANGELOG.md`** (release-please owns it).
 ## Discord deploy notifications
 
 `scripts/notify-deploy.mjs` (+ `scripts/notify-deploy/templates.mjs`) posts to a
-Discord channel after a successful deploy. It posts **only that deploy's
-CHANGELOG delta** (diff of `CHANGELOG.md` between the previous deploy's commit
-and this one) and prefixes the post with **inline change-type labels** (text,
+Discord channel after a successful deploy. It summarises **only that deploy's
+commits** — the Conventional Commits between the previously-deployed commit and
+this one (CHANGELOG.md is release-please-managed and only changes on releases, so
+it can't drive per-deploy summaries). It prefixes the post with **inline
+change-type labels** (text,
 e.g. `📦 Dependencies · 🐛 Fix`) derived from each entry's heading — no Discord
 forum tags / IDs / bot token required. Branding comes from the `COMPANY_NAME`
 repo variable. Wording/colours/label taxonomy live in `templates.mjs`; a notify
