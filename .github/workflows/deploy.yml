@@ -1,15 +1,15 @@
 name: Deploy to production
 
-# Deploys ORO to the ORO host via the self-hosted runner over the private
-# network. The runner SSHes to the ORO box and runs deploy/deploy-oro.sh
+# Deploys the platform to the production host via the self-hosted runner over
+# the private network. The runner SSHes to the box and runs deploy/deploy-oro.sh
 # (git pull → pull prebuilt image → up → health gate). No public SSH involved.
 #
 # Triggers:
 #   • after CI succeeds on main (deploys the freshly built image)
-#   • manual (Actions → deploy-oro → Run workflow)
+#   • manual (Actions → Deploy to production → Run workflow)
 #
 # Required repo secret:
-#   ORO_DEPLOY_KEY  — private SSH key authorized on the ORO box (ubuntu@10.50.40.100)
+#   ORO_DEPLOY_KEY  — private SSH key authorized on the production box (ubuntu@10.50.40.100)
 
 on:
   workflow_run:
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ORO (self-hosted → 10.50.40.100)
+    name: Deploy to production (self-hosted → 10.50.40.100)
     runs-on: [self-hosted, oro-ci]
     if: >-
       github.event_name == 'workflow_dispatch' ||
