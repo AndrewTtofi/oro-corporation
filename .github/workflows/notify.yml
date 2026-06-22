@@ -9,6 +9,10 @@ on:
     workflows: ["deploy-oro"]
     types: [completed]
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   notify:
     name: Post deploy summary to Discord
@@ -18,15 +22,37 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          # Full history so the script can diff CHANGELOG.md against the
+          # previously-deployed commit (delta-only notifications).
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: "20"
+      - name: Resolve previous deploy commit
+        id: prev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cur_id=${{ github.event.workflow_run.id }}
+          wf_id=${{ github.event.workflow_run.workflow_id }}
+          prev=$(gh api "/repos/${{ github.repository }}/actions/workflows/${wf_id}/runs?status=success&per_page=30" \
+            --jq "[.workflow_runs[] | select(.id < ${cur_id})] | sort_by(.id) | last | .head_sha // \"\"" 2>/dev/null || echo "")
+          echo "sha=${prev}" >> "$GITHUB_OUTPUT"
+          echo "previous successful deploy commit: ${prev:-<none>}"
       - name: Notify Discord
         env:
           DISCORD_DEPLOY_WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
-          DEPLOY_BRAND_NAME: ORO
+          # White-label firm this deployment is branded for. Set the COMPANY_NAME
+          # repo variable; empty → neutral "the platform" wording.
+          DEPLOY_COMPANY: ${{ vars.COMPANY_NAME }}
           SITE_URL: http://185.106.101.11
           DEPLOY_ACTOR: ${{ github.event.workflow_run.actor.login }}
           DEPLOY_RUN_URL: ${{ github.event.workflow_run.html_url }}
           DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+          # Previous deploy's commit — script posts only the CHANGELOG delta
+          # between it and DEPLOY_SHA. Empty on the first run → full section.
+          PREV_DEPLOY_SHA: ${{ steps.prev.outputs.sha }}
+          # JSON map of {tagKey: forumTagId} — set as a repo variable. The
+          # script auto-applies only the tags for change-types in this deploy.
+          DEPLOY_FORUM_TAGS: ${{ vars.DEPLOY_FORUM_TAGS }}
         run: node scripts/notify-deploy.mjs
