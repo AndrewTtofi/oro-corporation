@@ -1,4 +1,4 @@
-name: release-please
+name: Release
 
 # Semantic versioning, automated. On every push to main, release-please reads
 # the Conventional Commits since the last release (feat → minor, fix → patch,
