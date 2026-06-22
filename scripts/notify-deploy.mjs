@@ -14,8 +14,6 @@
      DISCORD_DEPLOY_WEBHOOK   Discord webhook URL (required to actually post)
      DEPLOY_COMPANY           White-label firm name shown in the message
                               (optional; empty → neutral "platform" wording)
-     DEPLOY_FORUM_TAGS        JSON map {tagKey: forumTagId} for Discord forum
-                              tags (optional)
      PREV_DEPLOY_SHA          Previous deploy's commit; posts only the
                               CHANGELOG delta since it (optional)
      SITE_URL                 Link to the live site           (default prod IP)
@@ -27,7 +25,7 @@ import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { CATEGORY_TO_GROUP, classifyTag, resolveForumTagIds, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
+import { CATEGORY_TO_GROUP, classifyTag, tagLabels, deploySuccessEmbed, deployFailedEmbed } from "./notify-deploy/templates.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -180,20 +178,15 @@ async function main() {
     if (!groups.new.length && !groups.improved.length && !groups.fixed.length && internalCount === 0) {
       try { groups.improved.push(clean(execSync("git log -1 --pretty=%s", { cwd: root }).toString())); } catch { /* noop */ }
     }
-    payload = deploySuccessEmbed({ ...common, groups, internalCount, version, siteUrl: SITE_URL, when: new Date().toISOString() });
+    // Inline change-type labels for this deploy (e.g. "📦 Dependencies · 🐛 Fix").
+    const labels = tagLabels(tagKeys);
+    payload = deploySuccessEmbed({ ...common, labels, groups, internalCount, version, siteUrl: SITE_URL, when: new Date().toISOString() });
     threadName = `${who} update · ${shortSha || version}`;
-
-    // Forum tags: auto-apply only the tags for change-types in this deploy.
-    const autoTagIds = resolveForumTagIds([...(tagKeys ?? [])], process.env.DEPLOY_FORUM_TAGS);
-    if (autoTagIds.length) payload.applied_tags = autoTagIds;
   }
 
   // Forum channels require a thread_name (each deploy becomes its own post).
   payload.thread_name = threadName.slice(0, 100);
   if (process.env.DEPLOY_NOTE) payload.content = process.env.DEPLOY_NOTE;
-  // Manual override: explicit forum tag IDs (comma-separated) win if provided.
-  const manualTagIds = (process.env.DEPLOY_TAG_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
-  if (manualTagIds.length) payload.applied_tags = manualTagIds;
   await post(payload);
 }
 

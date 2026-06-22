@@ -28,14 +28,10 @@ export const CATEGORY_TO_GROUP = {
 
 const MAX_ITEMS_PER_GROUP = 6;
 
-/* ── Forum tag taxonomy ───────────────────────────────────────────────
-   Create ONE forum tag per entry below in the Discord forum channel
-   (name them however you like — the labels here are suggestions). Then put
-   their tag IDs in the `DEPLOY_FORUM_TAGS` GitHub Actions *variable* as JSON
-   keyed by these keys, e.g.:
-     {"new":"123","improved":"456","fixed":"789",
-      "deps":"234","security":"567","internal":"890"}
-   Each deploy auto-applies only the tags whose changes are in that deploy.   */
+/* ── Change-type labels ───────────────────────────────────────────────
+   Each deploy is labelled (inline, as text in the post) with the change-types
+   it contains. These are plain text — no Discord setup, no tag IDs, no bot.
+   Edit the wording/emoji here. Order below = display order in the label line. */
 export const TAGS = {
   new:      { key: "new",      label: "✨ New" },
   improved: { key: "improved", label: "🛠️ Improvement" },
@@ -45,7 +41,7 @@ export const TAGS = {
   internal: { key: "internal", label: "🔧 Internal" },
 };
 
-/** Classify a changelog `###` heading into a single forum-tag key.
+/** Classify a changelog `###` heading into a single change-type key.
     Keyword-first (handles "Changed — Bump …" → deps, "Fixed — …" → fix),
     then falls back to the leading category word. */
 export function classifyTag(heading) {
@@ -61,24 +57,19 @@ export function classifyTag(heading) {
   return "improved";
 }
 
-/** Resolve the set of present tag keys to Discord forum tag IDs.
-    Reads the DEPLOY_FORUM_TAGS JSON map; returns up to 5 IDs (Discord's cap). */
-export function resolveForumTagIds(presentKeys, rawJson) {
-  let map = {};
-  try { map = JSON.parse(rawJson || "{}"); } catch { map = {}; }
-  const ids = [];
-  for (const key of presentKeys) {
-    const id = map[key];
-    if (id) ids.push(String(id));
-  }
-  return [...new Set(ids)].slice(0, 5);
+/** Turn the set of present change-type keys into ordered label strings. */
+export function tagLabels(tagKeys) {
+  const present = tagKeys instanceof Set ? tagKeys : new Set(tagKeys || []);
+  return Object.keys(TAGS).filter((k) => present.has(k)).map((k) => TAGS[k].label);
 }
 
 /** Build the Discord payload for a successful deploy. */
-export function deploySuccessEmbed({ company, groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
+export function deploySuccessEmbed({ company, labels, groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
   // White-label: when a company name is configured, the post is branded for
   // that firm; otherwise it uses neutral platform wording.
   const who = (company || "").trim();
+  // Inline change-type labels (what this deploy is), e.g. "📦 Dependencies · 🐛 Fix".
+  const labelLine = labels && labels.length ? `**${labels.join("  ·  ")}**\n\n` : "";
   const sections = [];
   for (const g of Object.values(GROUPS)) {
     const items = groups[g.key] ?? [];
@@ -97,7 +88,7 @@ export function deploySuccessEmbed({ company, groups, internalCount, version, sh
     sections.push(`_Plus ${internalCount} behind-the-scenes ${internalCount === 1 ? "update" : "updates"} (security, tooling, tests)._`);
   }
 
-  let description = `${who ? `A new version of **${who}** is now live.` : "A new deploy is live."} Here's what changed:\n\n${sections.join("\n\n")}`;
+  let description = `${labelLine}${who ? `A new version of **${who}** is now live.` : "A new deploy is live."} Here's what changed:\n\n${sections.join("\n\n")}`;
   if (description.length > 4000) description = description.slice(0, 3990) + "\n…";
 
   const footerBits = [version && `${version}`, shortSha && `build ${shortSha}`, actor && `deployed by ${actor}`].filter(Boolean);

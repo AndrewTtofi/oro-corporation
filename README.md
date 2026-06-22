@@ -1,10 +1,12 @@
-# ORO — Cyprus Corporate Services onboarding portal
+# Fiduciary onboarding platform (white-label)
 
-> Self-hosted MVP that runs as a single Docker Compose stack on one AWS Lightsail instance. No managed-SaaS dependency to boot.
+> A self-hosted, **white-label** client-onboarding platform for fiduciary / corporate-services firms. Runs as a single Docker Compose stack on one host — no managed-SaaS dependency to boot. Each deployment is branded for one firm.
 
 ## What it is
 
-A custom-built replacement for a failed 70-page no-code attempt at a client-onboarding portal. Prospects submit info and documents *before* they can book a free consultation; staff review, approve, and convert approved prospects to active clients post-call.
+A custom-built client-onboarding portal — originally "ORO" (a Cyprus corporate-services firm), now run as **white-label** software where each deployment is branded for a single firm. Prospects submit info and documents *before* they can book a free consultation; staff review, approve, and convert approved prospects to active clients post-call.
+
+> **Working on the code?** Read [**`CLAUDE.md`**](./CLAUDE.md) first — it's the coding guide for humans and AI agents (toolchain versions, the CI/build pitfalls that don't show up on PRs, the Prisma 7 driver-adapter setup, and the white-label/changelog conventions).
 
 ## 📖 Documentation
 
@@ -98,11 +100,13 @@ src/
 │  ├─ schema/               Zod schemas (incl. dynamic per-service form)
 │  ├─ services/             domain logic — submissions, bookings, clients, docs
 │  ├─ crypto/               file envelope helpers
-│  └─ db.ts                 prisma client singleton
+│  ├─ db.ts                 prisma client singleton (Prisma 7 pg driver adapter)
+│  └─ prisma-adapter.ts     shared pg adapter — every PrismaClient uses it
 ├─ worker/                  cron worker entry + idempotent seed
 prisma/
-├─ schema.prisma
+├─ schema.prisma            (no datasource url — Prisma 7; see prisma.config.ts)
 ├─ seed.ts                  thin wrapper → src/worker/seed.ts
+prisma.config.ts            Prisma 7 CLI config (supplies DATABASE_URL to db push / validate)
 deploy/
 ├─ Caddyfile
 ├─ entrypoint.sh            migrate + seed + exec

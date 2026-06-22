@@ -52,7 +52,4 @@ jobs:
           # Previous deploy's commit — script posts only the CHANGELOG delta
           # between it and DEPLOY_SHA. Empty on the first run → full section.
           PREV_DEPLOY_SHA: ${{ steps.prev.outputs.sha }}
-          # JSON map of {tagKey: forumTagId} — set as a repo variable. The
-          # script auto-applies only the tags for change-types in this deploy.
-          DEPLOY_FORUM_TAGS: ${{ vars.DEPLOY_FORUM_TAGS }}
         run: node scripts/notify-deploy.mjs

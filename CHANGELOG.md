@@ -10,10 +10,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
-### Changed — Discord deploy notifications: delta-only + forum tags + white-label wording
+### Changed — Discord deploy notifications: delta-only + change-type labels + white-label wording
 - Each deploy now posts **only that deploy's changes** (the CHANGELOG.md additions diffed between the previously-deployed commit and the current one) instead of re-posting the whole accumulated Unreleased section. Falls back to the full section when the previous deploy commit is unknown.
-- Auto-applies **Discord forum tags** for the change-types in each deploy (✨New / 🛠️Improvement / 🐛Fix / 📦Dependencies / 🔒Security / 🔧Internal), driven by a `DEPLOY_FORUM_TAGS` repo variable mapping tag keys → forum tag IDs.
+- Prefixes each post with **inline change-type labels** (text, e.g. `📦 Dependencies · 🐛 Fix`) derived from each entry's heading: ✨New / 🛠️Improvement / 🐛Fix / 📦Dependencies / 🔒Security / 🔧Internal. Plain text — no Discord forum tags, tag IDs, or bot token required.
 - Dropped the hard-coded "ORO" product branding (this is now white-label fiduciary software). Notifications now read the firm name from a `COMPANY_NAME` repo variable — when set, the post is branded for that firm ("A new version of **<Firm>** is now live"); when unset, it falls back to neutral wording ("The platform just got an update").
+- Added `CLAUDE.md` (LLM coding guide) and refreshed `README.md` / `docs/discord-notifications.md`.
 
 ### Changed — Upgrade to Next.js 16 + ESLint flat config
 - Bumped `next` and `eslint-config-next` 15.5 → 16.2.9. Next 16 removed `next lint`, so migrated to the ESLint CLI: replaced `.eslintrc.json` with `eslint.config.mjs` (flat config spreading `eslint-config-next/core-web-vitals`) and changed the `lint` script to `eslint .`.
