@@ -10,6 +10,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — Upgrade TypeScript to 6.0
+- Bumped `typescript` 5.9 → 6.0.3. Removed the deprecated `baseUrl` from `tsconfig.json` (TS 6 deprecates it, TS 7 removes it); the `@/*` path mapping resolves fine without it since all source imports are either `@/*` or real packages. Added `src/types/assets.d.ts` declaring `*.css` to satisfy TS 6's stricter side-effect-import checking (TS2882) for `import "./globals.css"`.
+
 ### Changed — CI: exempt Dependabot from the changelog gate
 - The `Changelog updated` check now skips Dependabot PRs (`github.actor != 'dependabot[bot]'`). Dependency bumps only touch manifests/lockfiles and never edit `CHANGELOG.md`, so the gate was failing every Dependabot PR. Human PRs still require a changelog entry.
 
