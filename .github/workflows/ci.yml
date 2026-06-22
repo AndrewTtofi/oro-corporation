@@ -15,7 +15,10 @@ jobs:
   changelog:
     name: Changelog updated
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    # Dependabot PRs only touch dependency manifests/lockfiles and never edit
+    # CHANGELOG.md, so the changelog gate would block every bump. Skip it for
+    # dependabot; human PRs still require a changelog entry.
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v4
         with:

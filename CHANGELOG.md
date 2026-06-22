@@ -10,6 +10,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — CI: exempt Dependabot from the changelog gate
+- The `Changelog updated` check now skips Dependabot PRs (`github.actor != 'dependabot[bot]'`). Dependency bumps only touch manifests/lockfiles and never edit `CHANGELOG.md`, so the gate was failing every Dependabot PR. Human PRs still require a changelog entry.
+
 ### Changed — Unify all admin pages onto the prototype design system
 - Converted every remaining `/admin` page off the older "Quiet Authority" tokens (`font-display`, `text-ink`, `--admin-*`, bespoke `Th`/`Td` table helpers, `min-w-[1000px]`) onto the prototype component system (`.card`, `.tbl`/`.tbl-wrap`/`.tbl-toolbar`, `.chips`/`.chip`, `.badge*`, `.kpi-tile`, `.dl`, `.file-row`, `.scrim`/`.modal*`, `.field`/`.input`). The whole admin surface now shares one look.
   - Lists/detail: clients (list + full client detail: header, tabs, key-dates, compliance bar, conversation, folders, modals), submissions (queue + detail + actions + party workspace), users, analytics (shared KPI tiles), messages, content editor.
