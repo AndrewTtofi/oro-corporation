@@ -75,7 +75,10 @@ export function resolveForumTagIds(presentKeys, rawJson) {
 }
 
 /** Build the Discord payload for a successful deploy. */
-export function deploySuccessEmbed({ groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
+export function deploySuccessEmbed({ company, groups, internalCount, version, shortSha, actor, siteUrl, runUrl, when }) {
+  // White-label: when a company name is configured, the post is branded for
+  // that firm; otherwise it uses neutral platform wording.
+  const who = (company || "").trim();
   const sections = [];
   for (const g of Object.values(GROUPS)) {
     const items = groups[g.key] ?? [];
@@ -94,16 +97,16 @@ export function deploySuccessEmbed({ groups, internalCount, version, shortSha, a
     sections.push(`_Plus ${internalCount} behind-the-scenes ${internalCount === 1 ? "update" : "updates"} (security, tooling, tests)._`);
   }
 
-  let description = `A new deploy is live. Here's what changed:\n\n${sections.join("\n\n")}`;
+  let description = `${who ? `A new version of **${who}** is now live.` : "A new deploy is live."} Here's what changed:\n\n${sections.join("\n\n")}`;
   if (description.length > 4000) description = description.slice(0, 3990) + "\n…";
 
   const footerBits = [version && `${version}`, shortSha && `build ${shortSha}`, actor && `deployed by ${actor}`].filter(Boolean);
 
   return {
-    username: "Platform Updates",
+    username: who ? `${who} Updates` : "Platform Updates",
     embeds: [
       {
-        title: "🚀 The platform just got an update",
+        title: who ? `🚀 ${who} just got an update` : "🚀 The platform just got an update",
         url: siteUrl || undefined,
         description,
         color: BRAND_COLOR,
@@ -116,12 +119,13 @@ export function deploySuccessEmbed({ groups, internalCount, version, shortSha, a
 }
 
 /** Minimal payload for a failed deploy (used by the workflow's failure path). */
-export function deployFailedEmbed({ actor, runUrl, shortSha }) {
+export function deployFailedEmbed({ company, actor, runUrl, shortSha }) {
+  const who = (company || "").trim();
   return {
-    username: "Platform Updates",
+    username: who ? `${who} Updates` : "Platform Updates",
     embeds: [
       {
-        title: "⚠️ Platform deploy needs attention",
+        title: who ? `⚠️ ${who} deploy needs attention` : "⚠️ Platform deploy needs attention",
         description: "A deployment did not finish successfully. The site may still be on the previous version. An engineer should take a look.",
         color: 0xb42318,
         fields: runUrl ? [{ name: "​", value: `[View the failed run](${runUrl})`, inline: false }] : undefined,

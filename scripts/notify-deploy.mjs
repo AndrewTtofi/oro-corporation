@@ -12,6 +12,12 @@
 
    Env:
      DISCORD_DEPLOY_WEBHOOK   Discord webhook URL (required to actually post)
+     DEPLOY_COMPANY           White-label firm name shown in the message
+                              (optional; empty → neutral "platform" wording)
+     DEPLOY_FORUM_TAGS        JSON map {tagKey: forumTagId} for Discord forum
+                              tags (optional)
+     PREV_DEPLOY_SHA          Previous deploy's commit; posts only the
+                              CHANGELOG delta since it (optional)
      SITE_URL                 Link to the live site           (default prod IP)
      DEPLOY_ACTOR             Who triggered the deploy        (optional)
      DEPLOY_RUN_URL           Link to the CI run              (optional)
@@ -29,6 +35,9 @@ const DRY_RUN = args.includes("--dry-run");
 const FAILED = args.includes("--failed");
 
 const SITE_URL = process.env.SITE_URL || "http://185.106.101.11";
+// White-label: the firm/company this deployment is branded for. Empty → neutral
+// "platform" wording. Set via the COMPANY_NAME repo variable in notify.yml.
+const COMPANY = (process.env.DEPLOY_COMPANY || "").trim();
 const WEBHOOK = process.env.DISCORD_DEPLOY_WEBHOOK || "";
 
 /* ── markdown cleanup so non-engineers get clean prose ───────────────── */
@@ -155,12 +164,13 @@ async function post(payload) {
 async function main() {
   const shortSha = gitShort();
   const version = pkgVersion();
-  const common = { actor: process.env.DEPLOY_ACTOR || "", runUrl: process.env.DEPLOY_RUN_URL || "", shortSha };
+  const common = { company: COMPANY, actor: process.env.DEPLOY_ACTOR || "", runUrl: process.env.DEPLOY_RUN_URL || "", shortSha };
+  const who = COMPANY || "Platform";
 
   let payload, threadName;
   if (FAILED) {
     payload = deployFailedEmbed(common);
-    threadName = `Platform deploy failed · ${shortSha || version}`;
+    threadName = `${who} deploy failed · ${shortSha || version}`;
   } else {
     // Prefer ONLY this deploy's CHANGELOG additions (delta since the last
     // deploy); fall back to the full Unreleased section if the range is unknown.
@@ -171,7 +181,7 @@ async function main() {
       try { groups.improved.push(clean(execSync("git log -1 --pretty=%s", { cwd: root }).toString())); } catch { /* noop */ }
     }
     payload = deploySuccessEmbed({ ...common, groups, internalCount, version, siteUrl: SITE_URL, when: new Date().toISOString() });
-    threadName = `Platform update · ${shortSha || version}`;
+    threadName = `${who} update · ${shortSha || version}`;
 
     // Forum tags: auto-apply only the tags for change-types in this deploy.
     const autoTagIds = resolveForumTagIds([...(tagKeys ?? [])], process.env.DEPLOY_FORUM_TAGS);

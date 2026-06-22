@@ -42,6 +42,9 @@ jobs:
       - name: Notify Discord
         env:
           DISCORD_DEPLOY_WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK }}
+          # White-label firm this deployment is branded for. Set the COMPANY_NAME
+          # repo variable; empty → neutral "the platform" wording.
+          DEPLOY_COMPANY: ${{ vars.COMPANY_NAME }}
           SITE_URL: http://185.106.101.11
           DEPLOY_ACTOR: ${{ github.event.workflow_run.actor.login }}
           DEPLOY_RUN_URL: ${{ github.event.workflow_run.html_url }}

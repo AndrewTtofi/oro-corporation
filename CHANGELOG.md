@@ -13,7 +13,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 ### Changed — Discord deploy notifications: delta-only + forum tags + white-label wording
 - Each deploy now posts **only that deploy's changes** (the CHANGELOG.md additions diffed between the previously-deployed commit and the current one) instead of re-posting the whole accumulated Unreleased section. Falls back to the full section when the previous deploy commit is unknown.
 - Auto-applies **Discord forum tags** for the change-types in each deploy (✨New / 🛠️Improvement / 🐛Fix / 📦Dependencies / 🔒Security / 🔧Internal), driven by a `DEPLOY_FORUM_TAGS` repo variable mapping tag keys → forum tag IDs.
-- Dropped the hard-coded "ORO" product branding (this is now white-label fiduciary software): notifications use neutral wording ("The platform just got an update").
+- Dropped the hard-coded "ORO" product branding (this is now white-label fiduciary software). Notifications now read the firm name from a `COMPANY_NAME` repo variable — when set, the post is branded for that firm ("A new version of **<Firm>** is now live"); when unset, it falls back to neutral wording ("The platform just got an update").
 
 ### Changed — Upgrade to Next.js 16 + ESLint flat config
 - Bumped `next` and `eslint-config-next` 15.5 → 16.2.9. Next 16 removed `next lint`, so migrated to the ESLint CLI: replaced `.eslintrc.json` with `eslint.config.mjs` (flat config spreading `eslint-config-next/core-web-vitals`) and changed the `lint` script to `eslint .`.
