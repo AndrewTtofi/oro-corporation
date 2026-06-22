@@ -1,4 +1,4 @@
-name: seed-oro
+name: Seed database
 
 # One-off / on-demand: seed the production ORO database via the self-hosted
 # runner over the private network. Idempotent — the seed uses upserts, so it is

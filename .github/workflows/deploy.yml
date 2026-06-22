@@ -1,4 +1,4 @@
-name: deploy-oro
+name: Deploy to production
 
 # Deploys ORO to the ORO host via the self-hosted runner over the private
 # network. The runner SSHes to the ORO box and runs deploy/deploy-oro.sh

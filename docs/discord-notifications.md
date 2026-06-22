@@ -5,7 +5,7 @@ plain-language "what changed" summary to Discord. It is written for non-engineer
 
 ## How it works
 
-- `.github/workflows/notify.yml` runs when the **deploy-oro** workflow finishes
+- `.github/workflows/notify.yml` runs when the **Deploy to production** workflow finishes
   successfully. It resolves the previous successful deploy's commit and runs
   `scripts/notify-deploy.mjs`.
 - The script posts **only that deploy's changes** — it diffs `CHANGELOG.md`

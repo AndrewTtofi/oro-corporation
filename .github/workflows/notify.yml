@@ -1,4 +1,4 @@
-name: notify-discord
+name: Discord notification
 
 # Posts a plain-language "what changed" summary to Discord after a successful
 # production deploy. Runs only when the deploy-oro workflow finishes successfully.
@@ -6,7 +6,7 @@ name: notify-discord
 
 on:
   workflow_run:
-    workflows: ["deploy-oro"]
+    workflows: ["Deploy to production"]
     types: [completed]
 
 permissions:
