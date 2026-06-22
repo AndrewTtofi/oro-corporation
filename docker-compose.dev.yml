@@ -25,7 +25,7 @@ services:
       - sh
       - -c
       - |
-        node ./node_modules/prisma/build/index.js db push --schema=./prisma/schema.prisma --skip-generate --accept-data-loss
+        node ./node_modules/prisma/build/index.js db push --schema=./prisma/schema.prisma --accept-data-loss
         if [ "$$SEED_ON_BOOT" = "true" ]; then
           npx tsx prisma/seed.ts || echo "[dev] seed failed (continuing)"
         fi

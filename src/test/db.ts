@@ -1,5 +1,6 @@
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { PrismaClient } from "@prisma/client";
+import { pgAdapter } from "@/lib/prisma-adapter";
 import { execSync } from "node:child_process";
 
 let container: StartedPostgreSqlContainer | undefined;
@@ -14,11 +15,11 @@ export async function getTestPrisma(): Promise<PrismaClient> {
   if (prismaClient) return prismaClient;
   container = await new PostgreSqlContainer("postgres:16-alpine").start();
   const url = container.getConnectionUri();
-  execSync("npx prisma db push --skip-generate --accept-data-loss --schema=./prisma/schema.prisma", {
+  execSync("npx prisma db push --accept-data-loss --schema=./prisma/schema.prisma", {
     env: { ...process.env, DATABASE_URL: url },
     stdio: "inherit",
   });
-  prismaClient = new PrismaClient({ datasources: { db: { url } } });
+  prismaClient = new PrismaClient({ adapter: pgAdapter(url) });
   return prismaClient;
 }
 

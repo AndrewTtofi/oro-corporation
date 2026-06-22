@@ -131,7 +131,7 @@ docker compose up -d
 #     changes and refuses destructive ones, so it's safe to run every deploy.
 echo "[deploy] syncing DB schema (prisma db push)…"
 for i in $(seq 1 20); do
-  if docker compose exec -T web node ./node_modules/prisma/build/index.js db push --skip-generate >/dev/null 2>&1; then
+  if docker compose exec -T web node ./node_modules/prisma/build/index.js db push >/dev/null 2>&1; then
     echo "[deploy] schema synced"; break
   fi
   sleep 3

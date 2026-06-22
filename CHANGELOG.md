@@ -10,6 +10,13 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ## Unreleased
 
+### Changed — Upgrade Prisma to 7 (driver adapters)
+- Bumped `prisma` and `@prisma/client` 5.22 → 7.8.0. Prisma 7 no longer reads the connection URL from `schema.prisma` and connects through a driver adapter, so:
+  - Removed `url` from the `datasource` block and added `prisma.config.ts`, which supplies the URL to CLI / schema-engine commands (`db push`, `validate`, `studio`) from `DATABASE_URL` (with a dependency-free `.env` loader for local dev, since Prisma 7 no longer auto-loads `.env`).
+  - Added `@prisma/adapter-pg` + `pg` and a shared `src/lib/prisma-adapter.ts` helper; every `PrismaClient` (web `src/lib/db.ts`, the three workers, and the test harness) now constructs with the pg adapter. The test harness replaces the removed `datasources` constructor option with the adapter.
+  - The `prisma-client-js` generator still emits to `node_modules/@prisma/client`, so the ~80 `@prisma/client` import sites are unchanged.
+  - Dockerfile now copies `prisma.config.ts` into the runtime image so `prisma db push` / `migrate deploy` can resolve the connection URL at deploy time.
+
 ### Fixed — Worker Docker build broken under TypeScript 6
 - `tsconfig.worker.json` still used `baseUrl` and `moduleResolution: node` (node10), which TS 6 flags as errors (TS5101 / TS5107). The TS 6 bump only updated `tsconfig.json`, so `npm run worker:build` in the Dockerfile failed — breaking the `Build Docker image` CI job and blocking all production deploys. Added `"ignoreDeprecations": "6.0"` to the worker config (the worker build depends on `baseUrl` for `tsc-alias`); behaviour is unchanged.
 

@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { PrismaClient, KeyDateStatus, BookingStatus } from "@prisma/client";
+import { pgAdapter } from "@/lib/prisma-adapter";
 import { notify } from "@/lib/providers/notify";
 import { autoRescreenTick } from "./jobs/auto-rescreen";
 import { periodicReviewTick } from "./jobs/periodic-review";
@@ -15,7 +16,7 @@ import { backfillCompliance } from "./jobs/backfill-compliance";
  * fleshed out in slice 9; this entry point exists so the worker container
  * can boot from slice 2 onward.
  */
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: pgAdapter() });
 
 async function tick24h() {
   const now = Date.now();
