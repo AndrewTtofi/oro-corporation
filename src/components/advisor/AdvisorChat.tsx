@@ -101,12 +101,53 @@ export function AdvisorChat({ brand }: { brand: string }) {
     );
   };
 
+  const send = () => { const v = input; setInput(""); receive(v); };
+  const onKey = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
+  const showChips = !!chips && chips.length > 0 && stage !== "typing";
+
+  // Landing state — a focused, Lovable-style prompt hero. Switches to the
+  // conversation view the moment the visitor sends their first message.
+  const started = messages.some((m) => m.role === "me") || stage !== "await";
+
+  if (!started) {
+    return (
+      <div className="advisor-wrap is-hero">
+        <div className="advisor-hero">
+          <h1 className="advisor-hero-title">What are you trying to do?</h1>
+          <p className="advisor-hero-sub">
+            Lower tax, set up a company, open banking, relocate — tell {brand}{" "}
+            your situation and get an instant service &amp; jurisdiction recommendation.
+          </p>
+
+          <div className="hero-composer">
+            <textarea
+              className="hc-input" value={input} rows={2} autoFocus autoComplete="off"
+              placeholder="Describe what you need in plain words…"
+              onChange={(e) => setInput(e.target.value)} onKeyDown={onKey}
+            />
+            <div className="hc-foot">
+              <span className="hc-hint"><Icon name="sparkles" className="ic-16" /> Free · instant · no sign-up</span>
+              <button className="hc-send" aria-label="Send" disabled={!input.trim()} onClick={send}><Icon name="arrow" /></button>
+            </div>
+          </div>
+
+          {showChips && (
+            <div className="chips advisor-hero-chips">
+              {chips!.map((c) => <button key={c} className="chip" onClick={() => receive(c)}>{c}</button>)}
+            </div>
+          )}
+          <p className="advisor-hero-foot">Starting points, not formal advice — a specialist confirms before anything is filed.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="advisor-wrap">
+    <div className="advisor-wrap is-chat">
       <div className="advisor-head">
         <div className="row gap-2" style={{ alignItems: "center" }}>
           <div className="avatar" style={{ background: "var(--brand)" }}><Icon name="sparkles" className="ic-18" /></div>
-          <div><div style={{ fontWeight: 600 }}>{brand} Advisor <span className="badge badge-new">AI</span></div><div className="muted" style={{ fontSize: "var(--fs-2xs)" }}>Free, instant, no sign-up · tell me your situation</div></div>
+          <div style={{ minWidth: 0 }}><div style={{ fontWeight: 600 }}>{brand} Advisor <span className="badge badge-new">AI</span></div><div className="muted advisor-sub" style={{ fontSize: "var(--fs-2xs)" }}>Free, instant, no sign-up · tell me your situation</div></div>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={reset}>Start over</button>
       </div>
@@ -116,16 +157,15 @@ export function AdvisorChat({ brand }: { brand: string }) {
           ? <div key={i} className="bubble them" style={{ maxWidth: "96%", background: "transparent", padding: 0 }}><RecCard card={m.card} /></div>
           : <div key={i} className={`bubble ${m.role === "me" ? "me" : "them"}`}>{m.text}</div>)}
         {stage === "typing" && <div className="bubble them typing"><span /><span /><span /></div>}
-        {chips && chips.length > 0 && stage !== "typing" && (
-          <div className="chips advisor-chips">{chips.map((c) => <button key={c} className="chip" onClick={() => receive(c)}>{c}</button>)}</div>
+        {showChips && (
+          <div className="chips advisor-chips">{chips!.map((c) => <button key={c} className="chip" onClick={() => receive(c)}>{c}</button>)}</div>
         )}
       </div>
 
       <div className="composer advisor-composer">
-        <input className="input" value={input} placeholder="Describe what you need…" autoComplete="off"
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); receive(input); setInput(""); } }} />
-        <button className="btn btn-primary btn-icon" onClick={() => { receive(input); setInput(""); }}><Icon name="arrow" /></button>
+        <textarea className="input hc-input" value={input} placeholder="Describe what you need…" rows={1} autoComplete="off"
+          onChange={(e) => setInput(e.target.value)} onKeyDown={onKey} />
+        <button className="btn btn-primary btn-icon" aria-label="Send" disabled={!input.trim()} onClick={send}><Icon name="arrow" /></button>
       </div>
     </div>
   );

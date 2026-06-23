@@ -254,8 +254,10 @@
   .kpi-tile { width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--brand-50); color: var(--brand); display: grid; place-items: center; }
 
   /* ─── Tables ───────────────────────────────────────────────────── */
-  .tbl-wrap { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+  .tbl-wrap { border: 1px solid var(--border); border-radius: var(--radius-md); overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; background: var(--surface); }
   table.tbl { width: 100%; border-collapse: collapse; }
+  /* keep multi-column tables readable inside a horizontal scroll on small screens */
+  @media (max-width: 640px) { table.tbl { min-width: 560px; } }
   table.tbl thead th {
     background: var(--surface-2); text-align: left;
     font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted);
@@ -393,7 +395,9 @@
   .pubfooter a { display: block; color: #AAB4CE; font-size: 0.875rem; padding: 5px 0; }
   .pubfooter a:hover { color: #fff; }
   .pubfooter .wordmark { color: #fff; }
-  .pubfooter .legal { max-width: var(--container-max); margin: 48px auto 0; padding-top: 24px; border-top: 1px solid #1E2A45; font-size: 0.75rem; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .pubfooter .legal { max-width: var(--container-max); margin: 48px auto 0; padding-top: 24px; border-top: 1px solid #1E2A45; font-size: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+  .pubfooter .legal-links { display: inline-flex; align-items: center; gap: 24px; }
+  .pubfooter .legal-links a { display: inline; padding: 0; }
   @media (max-width: 780px) { .pubfooter .cols { grid-template-columns: 1fr 1fr; } }
 
   .price-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); padding: 32px; position: relative; }
@@ -590,6 +594,21 @@
 .mkt-card { display: flex; flex-direction: column; height: 100%; }
 .mkt-grid { align-items: stretch; }
 
+/* Partner network — mobile-friendly filters + horizontally scrollable category bar */
+@media (max-width: 640px) {
+  .mkt-filterbar { flex-direction: column; align-items: stretch; }
+  .mkt-filterbar .searchbox,
+  .mkt-filterbar .searchbox input,
+  .mkt-filterbar .select { width: 100% !important; max-width: none !important; }
+  .mkt-filterbar > .right { margin-left: 0; width: 100%; }
+  .mkt-filterbar > .right .select { flex: 1; }
+  .mkt-filterbar > .right .toggle-group { flex: none; }
+  /* category switcher scrolls sideways instead of wrapping into broken rows */
+  .mkt-cats { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-width: 100%; scrollbar-width: none; }
+  .mkt-cats::-webkit-scrollbar { display: none; }
+  .mkt-cats button { flex: 0 0 auto; white-space: nowrap; }
+}
+
 .compare-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 120; background: var(--surface); border-top: 1px solid var(--border-color); box-shadow: 0 -4px 16px rgba(16,24,40,.08); padding: var(--space-4) 0; }
 
 /* modal */
@@ -612,11 +631,62 @@
 .bubble.me { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
 .composer { display: flex; gap: 10px; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-color); }
 .composer .input, .composer textarea { flex: 1; }
-.advisor-wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; }
-.advisor-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--border-color); margin-bottom: var(--space-4); }
-.advisor-thread { min-height: 46vh; max-height: calc(100vh - 240px); overflow: auto; padding: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.advisor-chips { margin-top: var(--space-2); align-self: flex-start; }
-.advisor-composer { position: sticky; bottom: 0; background: var(--bg); padding: var(--space-3) 0 0; margin-top: var(--space-3); border-top: 1px solid var(--border-color); }
+/* Advisor page wrapper — vertically centres the content in the viewport so the
+   hero sits in the optical middle instead of floating at the top.
+   NB: this project does not define the space/fs scale as CSS custom properties
+   (only Tailwind utility classes), so spacing here uses literal px, not var(). */
+.advisor-page { max-width: 820px; margin: 0 auto; padding: 24px; min-height: calc(100dvh - 72px); display: flex; flex-direction: column; justify-content: center; }
+@media (max-width: 640px) { .advisor-page { padding: 14px; min-height: calc(100dvh - 60px); } }
+
+.advisor-wrap { width: 100%; max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; }
+/* Conversation view: one contained panel — header, scrolling thread, pinned composer.
+   Sizes to content; only the thread scrolls once the chat outgrows the cap. */
+.advisor-wrap.is-chat {
+  max-height: min(760px, calc(100dvh - 150px));
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.advisor-wrap.is-hero { align-items: center; }
+
+/* Landing hero — focused, Lovable-style prompt as the centrepiece */
+.advisor-hero { width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px; padding: 24px 0; }
+.advisor-hero-title { font-size: clamp(1.7rem, 4.2vw, 2.5rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.08; }
+.advisor-hero-sub { color: var(--text-muted); font-size: 1.0625rem; line-height: 1.55; max-width: 48ch; margin-top: -8px; }
+
+.hero-composer { width: 100%; max-width: 100%; margin-top: 4px; background: var(--surface); border: 1px solid var(--border-strong-color); border-radius: 18px; box-shadow: var(--shadow-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
+.hero-composer:focus-within { border-color: var(--brand); box-shadow: var(--shadow-focus), var(--shadow-lg); }
+.hc-input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; border: 0; outline: 0; resize: none; background: transparent; font: inherit; font-size: 1.0625rem; line-height: 1.5; color: var(--text); }
+.hc-input::placeholder { color: var(--text-muted); }
+.hc-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.hc-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-muted); }
+.hc-send { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 0; background: var(--brand); color: #fff; display: grid; place-items: center; cursor: pointer; overflow: hidden; transition: background var(--dur-fast), transform var(--dur-fast); }
+.hc-send svg { width: 18px; height: 18px; }
+.hc-send:hover:not(:disabled) { background: var(--brand-dark); }
+.hc-send:active:not(:disabled) { transform: scale(.94); }
+.hc-send:disabled { opacity: .4; cursor: default; }
+.advisor-hero-chips { justify-content: center; }
+.advisor-hero-foot { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+.advisor-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border-color); margin-bottom: 0; }
+.advisor-head > .row { min-width: 0; }
+.advisor-head .btn { flex: none; }
+.advisor-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.advisor-thread { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.advisor-chips { margin-top: 8px; align-self: flex-start; }
+/* chat-mode composer: rounded box matching the hero, with the textarea + send inline */
+.advisor-composer { flex: none; position: static; display: flex; align-items: flex-end; gap: 10px; background: var(--surface); padding: 14px 18px; margin-top: 0; border-top: 1px solid var(--border-color); }
+.advisor-composer .hc-input { flex: 1; min-width: 0; min-height: 42px; max-height: 120px; padding: 9px 12px; border: 1px solid var(--border-strong-color); border-radius: 10px; background: var(--surface); }
+.advisor-composer .hc-input:focus { border-color: var(--brand); box-shadow: var(--shadow-focus); }
+@media (max-width: 640px) {
+  .advisor-wrap.is-chat { max-height: calc(100dvh - 120px); border-radius: var(--radius-md); }
+  .advisor-head, .advisor-composer { padding-left: 14px; padding-right: 14px; }
+  .advisor-thread { padding: 16px; }
+  .advisor-sub { display: none; }
+  .advisor-hero { padding-top: clamp(12px, 4vh, 32px); gap: 14px; }
+}
 .bubble.typing { display: inline-flex; gap: 5px; align-items: center; width: auto; }
 .bubble.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: blink 1.2s infinite; }
 .bubble.typing span:nth-child(2) { animation-delay: .18s; }

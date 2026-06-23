@@ -12,7 +12,7 @@ export default async function AdvisorPage() {
   return (
     <>
       <TopNav />
-      <div className="container" style={{ maxWidth: 820, padding: "var(--space-6)" }}>
+      <div className="advisor-page">
         <AdvisorChat brand={brandName} />
       </div>
     </>

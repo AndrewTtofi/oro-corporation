@@ -39,10 +39,9 @@ export async function Footer() {
       </div>
       <div className="legal">
         <span>© 2026 {brandName}. EU data residency · GDPR-ready.</span>
-        <span style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        <span className="legal-links">
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy</Link>
-          <span>EU data residency · GDPR-ready</span>
         </span>
       </div>
     </footer>

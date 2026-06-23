@@ -124,7 +124,7 @@ export function MarketplaceTool({ brand, authed }: { brand: string; authed: bool
       </div>
 
       <div className="card mb-5">
-        <div className="row gap-3 wrap">
+        <div className="row gap-3 wrap mkt-filterbar">
           <div className="searchbox grow" style={{ maxWidth: 260 }}>
             <input placeholder="Search partners…" value={q} onChange={(e) => { setQ(e.target.value); setPage(6); }} />
           </div>
