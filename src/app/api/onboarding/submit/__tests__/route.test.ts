@@ -227,7 +227,9 @@ describe("onboarding/submit PUT route (submitProspect)", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.ok).toBe(true);
-      expect(json.reference).toMatch(/^[A-Z]+-\d{4}-\d{5}$/);
+      // PUT preserves the prospect's existing reference (allocated at create
+      // time); it does not re-derive a brand prefix here.
+      expect(json.reference).toBe(prospect.referenceNumber);
 
       // Compliance infrastructure must be created
       const complianceFile = await tx.complianceFile.findUnique({ where: { prospectId: prospect.id } });
