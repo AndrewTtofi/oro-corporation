@@ -37,6 +37,9 @@ jobs:
           # Managed config injected into the box .env by deploy-oro.sh.
           SUPER_ADMIN_EMAILS: ${{ secrets.SUPER_ADMIN_EMAILS }}
           SUPER_ADMIN_PASSWORD: ${{ secrets.SUPER_ADMIN_PASSWORD }}
+          # White-label firm name → applied to the app's branding (single source
+          # of truth; also used by the deploy notifier). Empty → neutral wording.
+          COMPANY_NAME: ${{ vars.COMPANY_NAME }}
         run: |
           set -euo pipefail
           install -m 700 -d "$HOME/.ssh"
@@ -48,7 +51,7 @@ jobs:
           # them from env and writes them into /opt/oro/.env. GitHub masks values.
           ssh -i "$HOME/.ssh/oro_deploy" -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
               ubuntu@"$ORO_HOST" \
-              "SUPER_ADMIN_EMAILS='${SUPER_ADMIN_EMAILS}' SUPER_ADMIN_PASSWORD='${SUPER_ADMIN_PASSWORD}' bash -s" <<'REMOTE'
+              "SUPER_ADMIN_EMAILS='${SUPER_ADMIN_EMAILS}' SUPER_ADMIN_PASSWORD='${SUPER_ADMIN_PASSWORD}' COMPANY_NAME='${COMPANY_NAME}' bash -s" <<'REMOTE'
           set -euo pipefail
           cd /opt/oro
           git fetch --depth=1 origin main

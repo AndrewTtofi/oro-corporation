@@ -78,7 +78,7 @@ function renderText(a: NotifyArgs): string {
   if (a.template === "submission-update") {
     return `Application ${a.data.reference}: status is now ${a.data.status}.`;
   }
-  return "Notification from ORO Corporate Services.";
+  return "You have a new notification.";
 }
 
 let cached: NotificationProvider | undefined;

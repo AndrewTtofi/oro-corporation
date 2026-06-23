@@ -81,6 +81,27 @@ Everything external is behind a provider interface in `src/lib/providers/`. Swap
 
 This is the *self-hosted MVP*; the same code path migrates to managed services later by flipping env, not by rewriting.
 
+## White-label branding
+
+Each deployment is branded for one firm. The firm name is set **once** via the
+`COMPANY_NAME` GitHub Actions variable — it flows through the deploy into the
+database (`OrgSettings.brandName`) and brands the whole app: emails, calendar
+invites, in-app copy, reference-number prefixes, the legal/marketing pages, and
+the Discord deploy notifications. Unset → neutral "the platform" wording.
+
+```bash
+gh variable set COMPANY_NAME --body "Acme Trust"   # then the next deploy applies it
+```
+
+No brand name is hard-coded in the codebase. Code reads branding from
+`getBranding()` (React server components) or `getServerBranding()` (workers,
+email/calendar/providers); both resolve from `OrgSettings` with neutral
+fallbacks. Branding (name, mark, accent colour, theme, legal entity, reference
+prefix, jurisdiction) is editable in the admin settings. See
+[`CLAUDE.md`](./CLAUDE.md) → *White-label branding* for the developer rules.
+Infra identifiers (the `oro-ci` runner, `/opt/oro`, secret names) keep their
+legacy names by design.
+
 ## Repository layout
 
 ```
@@ -125,4 +146,4 @@ deploy/
 
 ## License
 
-Proprietary — © ORO Corporate Services Limited.
+Proprietary. All rights reserved.

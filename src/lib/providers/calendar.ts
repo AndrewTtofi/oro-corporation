@@ -13,6 +13,7 @@ export interface BookingForIcs {
   durationMinutes: number;
   summary: string;
   description?: string;
+  organizerName?: string; // calendar/organizer display name; defaults to "the platform"
   organizerEmail: string;
   attendeeEmail: string;
   attendeeName?: string;
@@ -53,10 +54,11 @@ export class SelfHostedCalendar implements CalendarProvider {
   }
 
   buildIcs(b: BookingForIcs): Buffer {
+    const orgName = b.organizerName || "the platform";
     const cal = ical({
-      name: "ORO Corporate Services",
+      name: orgName,
       method: ICalCalendarMethod.REQUEST,
-      prodId: { company: "ORO Corporate Services", product: "ORO" },
+      prodId: { company: orgName, product: orgName },
     });
     cal.createEvent({
       id: b.uid,
@@ -65,7 +67,7 @@ export class SelfHostedCalendar implements CalendarProvider {
       summary: b.summary,
       description: b.description ?? "",
       location: b.location ?? "Google Meet (link to follow)",
-      organizer: { name: "ORO Corporate Services", email: b.organizerEmail },
+      organizer: { name: orgName, email: b.organizerEmail },
       attendees: [
         {
           name: b.attendeeName,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PartnerShell } from "@/components/admin/PartnerShell";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { getBranding } from "@/lib/services/branding";
 import { PartnerNoteForm } from "./PartnerNoteForm";
 
 export const metadata = { title: "Client profile" };
@@ -10,6 +11,7 @@ export const metadata = { title: "Client profile" };
 export default async function PartnerClientProfile({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireRole("partner");
   const { id } = await params;
+  const { brandName } = await getBranding();
 
   // Authorization: partner must be assigned to at least one ClientService on this client.
   const link = await prisma.clientService.findFirst({
@@ -113,7 +115,7 @@ export default async function PartnerClientProfile({ params }: { params: Promise
           <section className="bg-admin-surface border border-admin-border rounded-card">
             <div className="px-6 py-4 border-b border-admin-border" style={{ background: "#FDFDFD" }}>
               <h3 className="font-bold text-base">Internal Notes</h3>
-              <p className="text-[11px] text-admin-muted mt-1">Visible to ORO staff and partners. You can add notes but cannot delete.</p>
+              <p className="text-[11px] text-admin-muted mt-1">Visible to {brandName} staff and partners. You can add notes but cannot delete.</p>
             </div>
             <div className="p-6">
               <PartnerNoteForm clientId={client.id} />

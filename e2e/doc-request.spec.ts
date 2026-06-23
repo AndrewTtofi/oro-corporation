@@ -80,13 +80,14 @@ test("staff requests a document → client sees it in /app/documents", async ({ 
   // Wait for the history section to show the new request
   await expect(page.getByText("Latest bank statement (last 3 months)")).toBeVisible({ timeout: 10000 });
 
-  // ── 5. Client logs in and sees the request under "Requested by ORO" ───────
+  // ── 5. Client logs in and sees the request under "Requested by <firm>" ────
   await signIn(page, EMAIL, "oroTest!1");
   await page.waitForURL(/\/app/, { timeout: 15000 });
 
   await page.goto("/app/documents");
 
-  // The RequestsBlock renders the heading "Requested by ORO"
-  await expect(page.getByText(/requested by oro/i)).toBeVisible({ timeout: 10000 });
+  // The RequestsBlock renders the brand-driven heading "Requested by <firm>"
+  // (firm name comes from branding; neutral default when COMPANY_NAME unset).
+  await expect(page.getByText(/requested by/i)).toBeVisible({ timeout: 10000 });
   await expect(page.getByText("Latest bank statement (last 3 months)")).toBeVisible({ timeout: 10000 });
 });

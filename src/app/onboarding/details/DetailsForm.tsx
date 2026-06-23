@@ -166,7 +166,7 @@ export function DetailsForm({
                   </select>
                 </Field>
               </div>
-              <Field label="How did you hear about ORO?">
+              <Field label="How did you hear about us?">
                 <select className="select" value={g("source")} onChange={(e) => set("source", e.target.value)}>
                   <option value="">Select…</option>
                   <option value="google">Google Search</option>

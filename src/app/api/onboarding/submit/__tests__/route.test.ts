@@ -157,7 +157,9 @@ describe("onboarding/submit POST route (commitFormAnswers)", () => {
       const json = await res.json();
       expect(json.ok).toBe(true);
       expect(json.prospect.id).toBeTruthy();
-      expect(json.prospect.reference).toMatch(/^ORO-/);
+      // Reference prefix is brand-derived (no firm configured in tests →
+      // neutral default); assert the structural format, not a hard-coded brand.
+      expect(json.prospect.reference).toMatch(/^[A-Z]+-\d{4}-\d{5}$/);
       // ProspectDetail rows must exist
       const details = await tx.prospectDetail.findMany({ where: { prospectId: json.prospect.id } });
       expect(details.length).toBeGreaterThan(0);
@@ -225,7 +227,9 @@ describe("onboarding/submit PUT route (submitProspect)", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.ok).toBe(true);
-      expect(json.reference).toMatch(/^ORO-/);
+      // PUT preserves the prospect's existing reference (allocated at create
+      // time); it does not re-derive a brand prefix here.
+      expect(json.reference).toBe(prospect.referenceNumber);
 
       // Compliance infrastructure must be created
       const complianceFile = await tx.complianceFile.findUnique({ where: { prospectId: prospect.id } });

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ClientShell } from "@/components/client/ClientShell";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { getBranding } from "@/lib/services/branding";
 import { bucketDocument, BUCKET_KYC, BUCKET_CORRESPONDENCE } from "@/lib/services/documents-bucket";
 import { RequestsBlock, type ReqRow } from "./RequestsBlock";
 import { ClientFolderBlock, type ClientDocRow } from "./ClientFolderBlock";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function MyDocumentsPage() {
   const user = await requireUser();
+  const { brandName } = await getBranding();
   const [prospect, client] = await Promise.all([
     prisma.prospect.findUnique({ where: { userId: user.id }, include: { documents: { orderBy: { uploadedAt: "desc" } } } }),
     prisma.client.findUnique({
@@ -55,13 +57,13 @@ export default async function MyDocumentsPage() {
         <div>
           <p className="eyebrow mb-2">Documents</p>
           <h1 className="font-display text-3xl">Your documents</h1>
-          <p className="text-muted mt-2 text-meta">Encrypted at rest, accessible only to authorized ORO staff and assigned partners.</p>
+          <p className="text-muted mt-2 text-meta">Encrypted at rest, accessible only to authorized {brandName} staff and assigned partners.</p>
           <p className="text-muted mt-2 text-meta">Documents you upload are kept for audit. Contact your account manager if a document needs to be removed.</p>
         </div>
         {client && <ArbitraryUploadModal folders={arbitraryFolders} />}
       </div>
 
-      {client && <RequestsBlock requests={requests} />}
+      {client && <RequestsBlock requests={requests} brandName={brandName} />}
 
       {client ? folderKeys.map((k) => (
         <ClientFolderBlock key={k} id={`docs-${slugify(labelFor(k))}`} label={labelFor(k)} documents={byFolder.get(k) ?? []} />

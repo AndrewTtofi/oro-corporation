@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/db";
-
-const PREFIX = "ORO";
+import { getServerBranding } from "@/lib/services/branding-server";
 
 /**
- * Allocates a unique reference number of the form `ORO-{year}-{NNNNN}`.
- * Uses a per-year counter derived from the highest existing number; collisions
- * during burst load are caught by the @unique constraint and retried.
+ * Allocates a unique reference number of the form `{PREFIX}-{year}-{NNNNN}`,
+ * where PREFIX is the white-label reference prefix from org settings (e.g.
+ * "ORO"). Uses a per-year counter derived from the highest existing number;
+ * collisions during burst load are caught by the @unique constraint and retried.
  */
 export async function allocateReferenceNumber(year = new Date().getFullYear()): Promise<string> {
+  const { referencePrefix: PREFIX } = await getServerBranding();
   for (let attempt = 0; attempt < 5; attempt++) {
     const last = await prisma.prospect.findFirst({
       where: { referenceNumber: { startsWith: `${PREFIX}-${year}-` } },

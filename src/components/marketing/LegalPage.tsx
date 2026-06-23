@@ -8,11 +8,15 @@ export function LegalPage({
   updated,
   intro,
   sections,
+  legalName,
+  contactEmail,
 }: {
   title: string;
   updated: string;
   intro: string;
   sections: LegalSection[];
+  legalName: string;
+  contactEmail: string | null;
 }) {
   return (
     <div className="shell-marketing">
@@ -45,7 +49,7 @@ export function LegalPage({
 
             <hr className="hr mt-10" />
             <p className="text-muted" style={{ fontSize: "0.8125rem" }}>
-              Questions about this document? Contact ORO Corporate Services Limited at info@oro.cy.
+              Questions about this document? Contact {legalName}{contactEmail ? ` at ${contactEmail}` : ""}.
             </p>
           </div>
         </section>

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { logActivity } from "@/lib/services/activity";
 import { email } from "@/lib/providers/email";
+import { getServerBranding } from "@/lib/services/branding-server";
 
 export interface SendMessageInput {
   clientId: string;
@@ -22,9 +23,10 @@ export async function sendMessage(input: SendMessageInput) {
   });
 
   try {
+    const { brandName } = await getServerBranding();
     await email().send({
       to: client.user.email,
-      subject: "New message from ORO",
+      subject: `New message from ${brandName}`,
       html: `<p>${escapeHtml(input.body).replace(/\n/g, "<br/>")}</p><p style="color:#888">Reply to this email to respond.</p>`,
     });
   } catch (e) {

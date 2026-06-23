@@ -12,9 +12,9 @@ one host. Each production deployment is white-labelled for **one firm**.
 
 > **White-label rule:** do not hard-code a product/brand name in new code.
 > "ORO" is the legacy name and survives only in historical/demo data (e.g.
-> `*@oro.local` seed accounts). User-facing branding comes from config/DB
-> (`getBranding`, theme CSS); the deploy-notification brand comes from the
-> `COMPANY_NAME` repo variable.
+> `*@oro.local` seed accounts) and infra identifiers (the `oro-ci` runner,
+> `/opt/oro`, `ORO_DEPLOY_KEY` secret — these are deliberately left). Read the
+> firm name from branding instead — see the White-label branding section.
 
 ## Stack & versions — do not silently downgrade
 
@@ -121,10 +121,42 @@ and you must **not hand-edit `CHANGELOG.md`** (release-please owns it).
 - Push to `main` → CI (incl. `build-image`) → `deploy.yml` on a **self-hosted
   runner** → prod at `http://185.106.101.11` (private target `10.50.40.100`).
   Deploy is gated on full CI success — a red `build-image` skips the deploy.
-- The deploy runs `prisma db push` then `ensure-super-admin`, behind a health
-  gate. Super-admin + secrets come from GitHub secrets injected into the box.
+- The deploy runs `prisma db push`, then `ensure-super-admin` and
+  `ensure-branding`, behind a health gate. Super-admin + secrets come from
+  GitHub secrets injected into the box.
 - Internal Discord deploy notifications read the firm from the `COMPANY_NAME`
   repo variable (empty → neutral "the platform" wording).
+
+## White-label branding
+
+The firm name is configured **once** via the `COMPANY_NAME` GitHub Actions
+**variable** — never hard-code a brand. The flow:
+
+```
+COMPANY_NAME (repo variable)
+  → deploy.yml passes it over SSH
+  → deploy-oro.sh writes it into the box .env (upsert_env)
+  → ensure-branding.js sets OrgSettings.brandName (idempotent, every deploy)
+  → the app reads branding from OrgSettings everywhere
+```
+
+The same `COMPANY_NAME` also brands the Discord deploy notifier — one source of
+truth. The admin branding UI can still override per deployment.
+
+**When you write user-facing text, never hard-code a firm name — read branding:**
+
+- **React server components** → `getBranding()` (`src/lib/services/branding.ts`,
+  request-cached): `brandName`, `brandMark`, theme. Client components can't call
+  it — thread the value down as a prop, or use neutral copy ("us", "our team").
+- **Non-React server code** (workers, email/calendar/notification providers,
+  reference-number allocation) → `getServerBranding()`
+  (`src/lib/services/branding-server.ts`, plain async): `brandName`, `legalName`
+  (legal entity for emails/legal pages), `referencePrefix` (reference numbers),
+  `contactEmail`, `jurisdiction`. Read once and reuse in hot paths.
+
+Both fall back through `OrgSettings` to neutral defaults ("the platform"); no
+firm name is hard-coded in code. Branding fields live on the `OrgSettings`
+singleton (`brandName`, `legalName`, `referencePrefix`, `jurisdiction`, …).
 
 ## Discord deploy notifications
 

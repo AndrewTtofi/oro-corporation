@@ -4,6 +4,7 @@ import { ClientShell } from "@/components/client/ClientShell";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { getProspectForUser } from "@/lib/services/client-view";
+import { getBranding } from "@/lib/services/branding";
 import { ClientDashboard } from "./ClientDashboard";
 
 export const metadata = { title: "Dashboard" };
@@ -61,6 +62,7 @@ export default async function ClientDashboardPage() {
     <ClientShell active="dashboard" approved={true}>
       <ClientDashboard
         name={dbUser?.fullName ?? "Client"}
+        brandName={(await getBranding()).brandName}
         since={client.createdAt}
         complianceStatus={client.complianceFile?.status ?? null}
         riskRating={client.complianceFile?.riskRating ?? null}

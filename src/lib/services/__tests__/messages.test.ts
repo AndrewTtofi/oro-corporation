@@ -31,6 +31,13 @@ vi.mock("@/lib/providers/email", () => ({
   }),
 }));
 
+vi.mock("@/lib/services/branding-server", () => ({
+  getServerBranding: async () => ({
+    brandName: "Acme", legalName: "Acme Ltd", referencePrefix: "ACME",
+    contactEmail: null, jurisdiction: "Cyprus",
+  }),
+}));
+
 import { sendMessage, listThread } from "../messages";
 
 beforeEach(() => { db.reset(); emailMock.sent.length = 0; });

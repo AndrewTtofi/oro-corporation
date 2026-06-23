@@ -2,11 +2,13 @@ import Link from "next/link";
 import { PartnerShell } from "@/components/admin/PartnerShell";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { getBranding } from "@/lib/services/branding";
 
 export const metadata = { title: "My clients" };
 
 export default async function PartnerClientsList() {
   const user = await requireRole("partner");
+  const { brandName } = await getBranding();
 
   // Clients where this partner is assigned to at least one ClientService.
   const services = await prisma.clientService.findMany({
@@ -29,7 +31,7 @@ export default async function PartnerClientsList() {
     <PartnerShell active="clients">
       <h1 className="text-2xl font-bold mb-2">My Clients</h1>
       <p className="text-meta text-admin-muted mb-8">
-        Clients you&apos;ve been assigned to. Read-only view; reach out to ORO staff for changes.
+        Clients you&apos;ve been assigned to. Read-only view; reach out to {brandName} staff for changes.
       </p>
 
       {clients.length === 0 ? (

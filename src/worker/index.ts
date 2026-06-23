@@ -7,7 +7,7 @@ import { periodicReviewTick } from "./jobs/periodic-review";
 import { backfillCompliance } from "./jobs/backfill-compliance";
 
 /**
- * ORO reminders worker.
+ * Reminders worker.
  *  - 24h reminder: every 15 min, find bookings starting in 23h45–24h15 not yet sent
  *  - 1h reminder:  every 5 min,  find bookings starting in 0h55–1h05 not yet sent
  *  - daily 02:00 UTC: flip key_dates upcoming→overdue when past due

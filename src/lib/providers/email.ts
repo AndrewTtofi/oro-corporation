@@ -38,7 +38,7 @@ class SmtpProvider implements EmailProvider {
   }
 
   async send(args: SendArgs) {
-    const from = env().SMTP_FROM ?? "ORO Corporate <no-reply@oro.local>";
+    const from = env().SMTP_FROM ?? "no-reply@localhost";
     const info = await this.getTransporter().sendMail({
       from,
       to: args.to,
@@ -66,7 +66,7 @@ class ResendProvider implements EmailProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: e.SMTP_FROM ?? "ORO Corporate <no-reply@oro.local>",
+        from: e.SMTP_FROM ?? "no-reply@localhost",
         to: args.to,
         subject: args.subject,
         html: args.html,

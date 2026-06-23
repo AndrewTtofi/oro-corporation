@@ -3,11 +3,13 @@ import { ProgressBar } from "../ProgressBar";
 import { DocumentUploader } from "./DocumentUploader";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { getBranding } from "@/lib/services/branding";
 
 export const metadata = { title: "Upload documents" };
 
 export default async function OnboardingStep3() {
   const user = await requireUser();
+  const { brandName } = await getBranding();
   const prospect = await prisma.prospect.findUnique({
     where: { userId: user.id },
     include: { documents: true },
@@ -43,7 +45,7 @@ export default async function OnboardingStep3() {
 
         <p className="text-meta text-muted text-center max-w-[55ch] mx-auto mt-10 leading-relaxed">
           Your documents are encrypted and stored securely in compliance with GDPR.
-          Only authorized ORO staff and assigned professionals will have access to your data.
+          Only authorized {brandName} staff and assigned professionals will have access to your data.
         </p>
       </main>
     </>

@@ -4,6 +4,7 @@ import { assertRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { createDocumentRequest } from "@/lib/services/document-requests";
 import { email } from "@/lib/providers/email";
+import { getServerBranding } from "@/lib/services/branding-server";
 import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
@@ -27,9 +28,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   {
     try {
+      const { brandName } = await getServerBranding();
       await email().send({
         to: client.user.email,
-        subject: "ORO has requested a document",
+        subject: `${brandName} has requested a document`,
         html: `<p>Hi ${client.user.fullName},</p>
                <p>We've requested the following document:</p>
                <p><b>${escapeHtml(body.data.description)}</b></p>

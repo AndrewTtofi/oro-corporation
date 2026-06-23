@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { BookingStatus, Role } from "@prisma/client";
 import { calendar } from "@/lib/providers/calendar";
 import { notify } from "@/lib/providers/notify";
+import { getServerBranding } from "@/lib/services/branding-server";
 import { logActivity } from "./activity";
 
 const SLOT_HOURS = [9, 10, 11, 14, 15, 16] as const;
@@ -99,13 +100,15 @@ export async function createBooking(input: CreateBookingInput) {
   });
 
   // Fire-and-forget confirmation + .ics
+  const brand = await getServerBranding();
   const ics = calendar().buildIcs({
-    uid: `oro-${booking.id}@oro.local`,
+    uid: `booking-${booking.id}@booking.local`,
     startUtc: booking.startsAt,
     durationMinutes: booking.durationMinutes,
-    summary: "ORO Corporate Services — consultation",
-    description: "Free consultation with ORO Corporate Services.",
-    organizerEmail: "no-reply@oro.local",
+    summary: `${brand.legalName} — consultation`,
+    description: `Free consultation with ${brand.legalName}.`,
+    organizerName: brand.legalName,
+    organizerEmail: brand.contactEmail ?? "no-reply@localhost",
     attendeeEmail: prospect.user.email,
     attendeeName: prospect.user.fullName,
     location: "Google Meet (link to follow)",

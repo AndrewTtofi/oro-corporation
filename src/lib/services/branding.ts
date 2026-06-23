@@ -112,8 +112,8 @@ export type Branding = {
  *  so repeated reads across server components hit the DB once. */
 export const getBranding = cache(async (): Promise<Branding> => {
   const org = await getOrgSettings();
-  const brandName = (org.brandName?.trim() || org.displayName || "ORO").trim();
-  const brandMark = (org.brandMark?.trim() || brandName[0] || "O").toUpperCase();
+  const brandName = (org.brandName?.trim() || org.displayName || "the platform").trim();
+  const brandMark = (org.brandMark?.trim() || brandName[0] || "P").toUpperCase();
   const planTier = (PLAN_TIERS.includes(org.planTier as PlanTier) ? org.planTier : "professional") as PlanTier;
   return {
     brandName,

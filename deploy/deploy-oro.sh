@@ -64,6 +64,7 @@ upsert_env() {
 }
 upsert_env SUPER_ADMIN_EMAILS "${SUPER_ADMIN_EMAILS:-}"
 upsert_env SUPER_ADMIN_PASSWORD "${SUPER_ADMIN_PASSWORD:-}"
+upsert_env COMPANY_NAME "${COMPANY_NAME:-}"
 
 # 2) self-signed cert (once) with the public IP in its SAN
 mkdir -p deploy/certs
@@ -144,6 +145,12 @@ docker compose exec -T \
   -e SUPER_ADMIN_EMAILS="${SUPER_ADMIN_EMAILS:-}" \
   -e SUPER_ADMIN_PASSWORD="${SUPER_ADMIN_PASSWORD:-}" \
   web node ./dist-worker/worker/ensure-super-admin.js || echo "[deploy] super-admin provisioning skipped/failed (non-fatal)"
+
+# 5d) apply white-label brand name from COMPANY_NAME (idempotent; no-op if unset).
+echo "[deploy] applying white-label branding…"
+docker compose exec -T \
+  -e COMPANY_NAME="${COMPANY_NAME:-}" \
+  web node ./dist-worker/worker/ensure-branding.js || echo "[deploy] branding provisioning skipped/failed (non-fatal)"
 
 # 6) recreating web changes its container IP — bounce the proxy so Caddy
 #    re-resolves the upstream (otherwise it 503s on a stale IP).

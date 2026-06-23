@@ -13,6 +13,7 @@ const titleize = (s: string) => s.split(/[._]/).map((w) => w[0]?.toUpperCase() +
 
 export function ClientDashboard({
   name,
+  brandName,
   since,
   complianceStatus,
   riskRating,
@@ -24,6 +25,7 @@ export function ClientDashboard({
   hasUpcomingBookingWithin14Days,
 }: {
   name: string;
+  brandName: string;
   since: Date;
   complianceStatus: "open" | "in_review" | "cleared" | "blocked" | null;
   riskRating: "low" | "standard" | "high" | null;
@@ -71,7 +73,7 @@ export function ClientDashboard({
           {openRequests.length > 0 && (
             <div className="card">
               <div className="card-head">
-                <h3>ORO has requested</h3>
+                <h3>{brandName} has requested</h3>
                 <Link href="/app/documents" className="text-brand" style={{ fontSize: "0.8125rem" }}>Open documents →</Link>
               </div>
               <ul className="flex flex-col">

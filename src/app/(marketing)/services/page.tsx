@@ -2,10 +2,12 @@ import Link from "next/link";
 import { TopNav } from "@/components/marketing/TopNav";
 import { Footer } from "@/components/marketing/Footer";
 import { ServiceIcons, SERVICES } from "@/components/marketing/ServiceIcons";
+import { getBranding } from "@/lib/services/branding";
 
 export const metadata = { title: "Services" };
 
-export default function ServicesMarketingPage() {
+export default async function ServicesMarketingPage() {
+  const { brandName } = await getBranding();
   return (
     <div className="shell-marketing">
       <TopNav />
@@ -15,7 +17,7 @@ export default function ServicesMarketingPage() {
             <div className="sec-head">
               <div className="eyebrow">OUR EXPERTISE</div>
               <h2>Comprehensive solutions for international founders.</h2>
-              <p>From your first Cyprus company to ongoing tax and compliance, ORO delivers the full stack of fiduciary services under one roof.</p>
+              <p>From your first company to ongoing tax and compliance, {brandName} delivers the full stack of fiduciary services under one roof.</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

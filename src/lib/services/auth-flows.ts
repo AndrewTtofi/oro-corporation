@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
 import { Role } from "@prisma/client";
 import { email } from "@/lib/providers/email";
+import { getServerBranding } from "@/lib/services/branding-server";
 import { env } from "@/lib/env";
 import { registerSchema, type RegisterInput, forgotSchema, resetSchema } from "@/lib/schema/auth";
 
@@ -56,9 +57,10 @@ export async function registerProspect(input: RegisterInput) {
   });
 
   const link = `${env().APP_URL}/verify/${rawToken}`;
+  const { legalName } = await getServerBranding();
   await email().send({
     to: user.email,
-    subject: "Verify your ORO Corporate Services account",
+    subject: `Verify your ${legalName} account`,
     html: `<p>Welcome, ${user.fullName}.</p>
            <p>Please confirm your email by clicking the link below. It expires in 24 hours.</p>
            <p><a href="${link}">${link}</a></p>`,
@@ -107,9 +109,10 @@ export async function startPasswordReset(rawEmail: string) {
   });
 
   const link = `${env().APP_URL}/reset/${rawToken}`;
+  const { legalName } = await getServerBranding();
   await email().send({
     to: user.email,
-    subject: "Reset your ORO Corporate Services password",
+    subject: `Reset your ${legalName} password`,
     html: `<p>You requested a password reset.</p>
            <p>Use the link below within 1 hour. If you did not request this, ignore this email.</p>
            <p><a href="${link}">${link}</a></p>`,

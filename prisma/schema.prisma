@@ -409,12 +409,15 @@ model PasswordReset {
 
 model OrgSettings {
   id           String   @id @default("singleton")
-  displayName  String   @default("ORO Corporate Services")
+  displayName  String   @default("the platform")
   contactEmail String?
   address      String?
   // White-label branding (single-org, one deployment per tenant)
   brandName    String?  // public-facing brand; falls back to displayName
   brandMark    String?  // single-letter wordmark; derived from name if null
+  legalName    String?  // legal entity ("… Limited") for emails/legal pages; falls back to brand
+  referencePrefix String? // prefix for reference numbers (e.g. "ORO"); derived from brand when null
+  jurisdiction String?  // governing-law country for legal pages; defaults to "Cyprus"
   accentColor  String?  // hex; overrides the theme preset's brand colour
   themePreset  String   @default("indigo") // indigo | emerald | gold | burgundy | slate
   // Plan tier gates feature availability (starter | professional | scale)

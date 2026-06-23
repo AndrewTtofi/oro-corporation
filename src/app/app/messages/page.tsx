@@ -3,6 +3,7 @@ import { ClientShell } from "@/components/client/ClientShell";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { getMessagesForUser } from "@/lib/services/client-portal";
+import { getBranding } from "@/lib/services/branding";
 import { MessageComposer } from "./MessageComposer";
 
 export const metadata = { title: "Messages" };
@@ -17,6 +18,7 @@ export default async function MessagesPage() {
   ]);
   if (!prospect && !client) redirect("/onboarding");
 
+  const { brandName } = await getBranding();
   const isApproved = (prospect?.status === "approved") || !!client;
 
   return (
@@ -24,7 +26,7 @@ export default async function MessagesPage() {
       <div className="max-w-[800px]">
         <div className="mb-10">
           <p className="eyebrow mb-2">Messages</p>
-          <h1 className="font-display text-3xl">Conversation with the ORO team</h1>
+          <h1 className="font-display text-3xl">Conversation with the {brandName} team</h1>
           <p className="text-muted mt-2 text-meta">
             We&apos;ll reach out here if we need anything else. You can also send us a note at any time.
           </p>
@@ -41,8 +43,8 @@ export default async function MessagesPage() {
                 ? "bg-dark text-white"
                 : "bg-[var(--client-bg)]";
             const label = isStaff
-              ? `${m.sender?.fullName ?? "ORO team"} · ORO Staff`
-              : (m.sender?.fullName ?? "ORO team");
+              ? `${m.sender?.fullName ?? `${brandName} team`} · ${brandName} Staff`
+              : (m.sender?.fullName ?? `${brandName} team`);
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                 <div className="text-[11px] text-muted">
