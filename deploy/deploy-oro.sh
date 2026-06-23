@@ -122,7 +122,17 @@ cat > deploy/Caddyfile <<'CADDY'
 }
 CADDY
 
-# 5) pull prebuilt image + start
+# 5) reclaim disk before pulling. Each new :latest pull orphans the previous
+#    image (it becomes dangling/untagged); across many deploys these pile up and
+#    eventually fill the disk — containerd then fails the pull with "no space
+#    left on device". Prune dangling images + build cache first. Safe: it never
+#    touches the running image, tagged images still referenced by compose, or
+#    named volumes (Postgres data, encrypted docs).
+echo "[deploy] reclaiming disk (prune dangling images + build cache)…"
+docker image prune -f  >/dev/null 2>&1 || true
+docker builder prune -f >/dev/null 2>&1 || true
+
+# 5a) pull prebuilt image + start
 docker compose pull
 docker compose up -d
 
