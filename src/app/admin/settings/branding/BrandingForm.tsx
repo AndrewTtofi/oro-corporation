@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { BrandMark } from "@/components/BrandMark";
 
 /* Client-safe palette mirror of THEME_PRESETS (avoid importing the server
    branding module, which pulls in Prisma). Keep keys/colours in sync. */
@@ -19,7 +20,7 @@ const TIERS: { key: string; label: string; desc: string }[] = [
   { key: "scale", label: "Scale", desc: "Adds full white-label theming, AML / KYC screening, multi-language and API integrations." },
 ];
 
-type Initial = { brandName: string; brandMark: string; accentColor: string; themePreset: string; planTier: string };
+type Initial = { brandName: string; brandMark: string; logo: string; accentColor: string; themePreset: string; planTier: string };
 
 function hex2rgb(h: string): [number, number, number] {
   let s = h.replace("#", "");
@@ -34,7 +35,19 @@ const isHex = (v: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
 export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEditPlan: boolean }) {
   const [brandName, setBrandName] = useState(initial.brandName);
   const [brandMark, setBrandMark] = useState(initial.brandMark);
+  const [logo, setLogo] = useState(initial.logo);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
+
+  function onLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    if (file.size > 1_000_000) { setMsg("Logo too large — keep it under 1MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") { setLogo(reader.result); setMsg(null); } };
+    reader.readAsDataURL(file);
+  }
   const [themePreset, setThemePreset] = useState(initial.themePreset);
   const [planTier, setPlanTier] = useState(initial.planTier);
   const [pending, start] = useTransition();
@@ -71,6 +84,7 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
         body: JSON.stringify({
           brandName: brandName.trim() || null,
           brandMark: brandMark.trim() || null,
+          logo,
           accentColor: isHex(accentColor) ? accentColor : "",
           themePreset,
           // Plan tier is operator-controlled — only sent by a super admin.
@@ -96,7 +110,20 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
           <div className="field">
             <label>Wordmark letter</label>
             <input className="input" maxLength={2} value={brandMark} onChange={(e) => setBrandMark(e.target.value)} placeholder={mark} style={{ maxWidth: 100 }} />
-            <div className="help">Shown in the square logo mark. Defaults to the first letter of the brand name.</div>
+            <div className="help">Shown in the square logo mark when no logo image is uploaded. Defaults to the first letter of the brand name.</div>
+          </div>
+
+          <div className="field">
+            <label>Logo image</label>
+            <div className="row gap-3" style={{ alignItems: "center" }}>
+              <BrandMark logo={logo || null} mark={mark} style={{ width: 40, height: 40 }} />
+              <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+                {logo ? "Replace" : "Upload"}
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={onLogoFile} style={{ display: "none" }} />
+              </label>
+              {logo && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLogo("")}>Remove</button>}
+            </div>
+            <div className="help">PNG, JPEG, WEBP or SVG, under 1MB. Replaces the wordmark letter everywhere (sidebars, login, marketing, emails-in-app) after saving.</div>
           </div>
 
           <hr className="hairline" style={{ margin: "var(--space-5) 0" }} />
@@ -132,7 +159,7 @@ export function BrandingForm({ initial, canEditPlan }: { initial: Initial; canEd
             <div className="row-between">
               <div className="wordmark" style={{ fontSize: "var(--fs-body)" }}>
                 <span className="seal" />
-                <span className="mk" style={{ width: 24, height: 24, fontSize: 12 }}>{mark}</span>
+                <BrandMark logo={logo || null} mark={mark} style={{ width: 24, height: 24, fontSize: 12 }} />
                 <span>{brandName || "Your brand"}</span>
               </div>
               <button type="button" className="btn btn-primary btn-sm">Primary button</button>

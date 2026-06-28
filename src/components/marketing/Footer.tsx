@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { getBranding } from "@/lib/services/branding";
+import { BrandMark } from "@/components/BrandMark";
 
 export async function Footer() {
-  const { brandName, brandMark } = await getBranding();
+  const { brandName, brandMark, logo } = await getBranding();
   return (
     <footer className="pubfooter">
       <div className="cols">
         <div>
           <div className="wordmark" style={{ marginBottom: 16 }}>
             <span className="seal" />
-            <span className="mk">{brandMark}</span>
+            <BrandMark logo={logo} mark={brandMark} />
             <span>{brandName}</span>
           </div>
           <p style={{ maxWidth: "36ch", color: "#8C97B5", fontSize: "0.875rem" }}>

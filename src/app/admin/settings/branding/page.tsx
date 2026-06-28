@@ -13,6 +13,7 @@ export default async function BrandingSettingsPage() {
       initial={{
         brandName: org.brandName ?? org.displayName ?? "",
         brandMark: org.brandMark ?? "",
+        logo: org.logo ?? "",
         accentColor: org.accentColor ?? "",
         themePreset: org.themePreset ?? "indigo",
         planTier: org.planTier ?? "professional",

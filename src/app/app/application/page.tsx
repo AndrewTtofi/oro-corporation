@@ -36,39 +36,48 @@ export default async function MyApplicationPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2 max-w-[1100px]">
-        <Section title="Personal Information">
-          <Row label="Full legal name" value={map.fullLegalName ?? user.fullName} />
-          <Row label="Date of birth" value={map.dateOfBirth?.slice(0, 10)} />
-          <Row label="Nationality" value={map.nationality} />
-          <Row label="Residence" value={map.residenceCountry} />
-          <Row label="Address" value={map.address} multiline />
-        </Section>
+        <DetailSection
+          title="Personal Information"
+          rows={[
+            { label: "Full legal name", value: map.fullLegalName ?? user.fullName },
+            { label: "Date of birth", value: map.dateOfBirth?.slice(0, 10) },
+            { label: "Nationality", value: map.nationality },
+            { label: "Residence", value: map.residenceCountry },
+            { label: "Address", value: map.address, multiline: true },
+          ]}
+        />
 
-        <Section title="Business Intent">
-          <Row label="Business description" value={map.businessDescription} multiline />
-          <Row label="Expected turnover" value={map.expectedTurnover} />
-          <Row label="Timeline" value={pretty(map.timeline)} />
-          <Row label="Source" value={pretty(map.source)} />
-        </Section>
+        <DetailSection
+          title="Business Intent"
+          rows={[
+            { label: "Business description", value: map.businessDescription, multiline: true },
+            { label: "Expected turnover", value: map.expectedTurnover },
+            { label: "Timeline", value: pretty(map.timeline) },
+            { label: "Source", value: pretty(map.source) },
+          ]}
+        />
 
         <Section title="Services Selected">
           <p className="text-meta">
             {Array.isArray(prospect.servicesSelected) && (prospect.servicesSelected as string[]).length
               ? (prospect.servicesSelected as string[]).map(prettyService).join(", ")
-              : "—"}
+              : <span className="text-muted">No services selected yet.</span>}
           </p>
         </Section>
 
-        <Section title="Service Specifics">
-          <Row label="Proposed company name" value={map.proposedCompanyName} />
-          <Row label="Business activity" value={map.businessActivity} />
-          <Row label="Shareholders" value={map.shareholderCount} />
-          <Row label="Nominee services" value={map.nomineeServices} />
-          <Row label="Permit type" value={pretty(map.permitType)} />
-          <Row label="Family members" value={map.familyCount} />
-          <Row label="License type" value={map.licenseType} />
-          <Row label="Account purpose" value={map.accountPurpose} />
-        </Section>
+        <DetailSection
+          title="Service Specifics"
+          rows={[
+            { label: "Proposed company name", value: map.proposedCompanyName },
+            { label: "Business activity", value: map.businessActivity },
+            { label: "Shareholders", value: map.shareholderCount },
+            { label: "Nominee services", value: map.nomineeServices },
+            { label: "Permit type", value: pretty(map.permitType) },
+            { label: "Family members", value: map.familyCount },
+            { label: "License type", value: map.licenseType },
+            { label: "Account purpose", value: map.accountPurpose },
+          ]}
+        />
       </div>
     </ClientShell>
   );
@@ -83,13 +92,23 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ label, value, multiline }: { label: string; value?: string | number | null; multiline?: boolean }) {
-  if (value === undefined || value === null || value === "") return null;
+type DetailRow = { label: string; value?: string | number | null; multiline?: boolean };
+
+function DetailSection({ title, rows }: { title: string; rows: DetailRow[] }) {
+  const present = rows.filter((r) => r.value !== undefined && r.value !== null && r.value !== "");
   return (
-    <div>
-      <div className="text-[12px] uppercase tracking-widest text-muted mb-1 font-semibold">{label}</div>
-      <div className={`text-meta ${multiline ? "leading-relaxed" : ""}`}>{String(value)}</div>
-    </div>
+    <Section title={title}>
+      {present.length === 0 ? (
+        <p className="text-meta text-muted">Not provided yet.</p>
+      ) : (
+        present.map((r) => (
+          <div key={r.label}>
+            <div className="text-[12px] uppercase tracking-widest text-muted mb-1 font-semibold">{r.label}</div>
+            <div className={`text-meta ${r.multiline ? "leading-relaxed" : ""}`}>{String(r.value)}</div>
+          </div>
+        ))
+      )}
+    </Section>
   );
 }
 

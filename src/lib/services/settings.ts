@@ -12,6 +12,17 @@ export const KNOWN_FLAGS = [
 
 export type FlagKey = (typeof KNOWN_FLAGS)[number]["key"];
 
+/** Onboarding document-upload phase modes (OrgSettings.documentsPhase). */
+export type DocumentsPhase = "mandatory" | "optional" | "off";
+
+/** Read the configured onboarding document-upload phase mode (defaults to
+ *  "mandatory" for any unexpected stored value). */
+export async function getDocumentsPhase(): Promise<DocumentsPhase> {
+  const org = await getOrgSettings();
+  const v = org.documentsPhase;
+  return v === "optional" || v === "off" ? v : "mandatory";
+}
+
 const DEFAULT_SERVICE_LABELS: Record<string, string> = {
   company_formation: "Company Formation",
   accounting: "Accounting",

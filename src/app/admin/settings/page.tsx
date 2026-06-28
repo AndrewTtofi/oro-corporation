@@ -12,6 +12,10 @@ export default async function OrgSettingsPage() {
         displayName: org.displayName,
         contactEmail: org.contactEmail,
         address: org.address,
+        documentsPhase:
+          org.documentsPhase === "optional" || org.documentsPhase === "off"
+            ? org.documentsPhase
+            : "mandatory",
       }}
     />
   );

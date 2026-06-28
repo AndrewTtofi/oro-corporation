@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { getProspectForUser } from "@/lib/services/client-view";
 import { getBranding } from "@/lib/services/branding";
+import { getVisibleDashboardSections } from "@/lib/services/dashboard-sections";
 import { ClientDashboard } from "./ClientDashboard";
 
 export const metadata = { title: "Dashboard" };
@@ -58,9 +59,12 @@ export default async function ClientDashboardPage() {
     (b) => b.status === "confirmed" && b.startsAt >= new Date() && b.startsAt <= next14,
   );
 
+  const sections = await getVisibleDashboardSections();
+
   return (
     <ClientShell active="dashboard" approved={true}>
       <ClientDashboard
+        sections={sections}
         name={dbUser?.fullName ?? "Client"}
         brandName={(await getBranding()).brandName}
         since={client.createdAt}

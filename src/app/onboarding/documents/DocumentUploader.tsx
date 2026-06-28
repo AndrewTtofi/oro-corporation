@@ -8,8 +8,10 @@ type DocType = "passport" | "proof_of_address" | "other";
 
 export function DocumentUploader({
   initial,
+  mode = "mandatory",
 }: {
   initial: { passport: DocPill | null; proof: DocPill | null; extras: DocPill[] };
+  mode?: "mandatory" | "optional";
 }) {
   const [passport, setPassport] = useState<DocPill | null>(initial.passport);
   const [proof, setProof] = useState<DocPill | null>(initial.proof);
@@ -18,7 +20,8 @@ export function DocumentUploader({
   const [submitting, startSubmit] = useTransition();
   const router = useRouter();
 
-  const canSubmit = !!passport && !!proof;
+  const docsRequired = mode === "mandatory";
+  const canSubmit = docsRequired ? !!passport && !!proof : true;
 
   async function uploadOne(type: DocType, file: File): Promise<DocPill | null> {
     if (file.size > 10 * 1024 * 1024) {
@@ -48,6 +51,7 @@ export function DocumentUploader({
       setError("Passport and Proof of Address are both required.");
       return;
     }
+    setError(null);
     startSubmit(async () => {
       const res = await fetch("/api/onboarding/submit", { method: "PUT" });
       if (!res.ok) {
@@ -64,7 +68,7 @@ export function DocumentUploader({
       <div className="flex flex-col gap-10 mb-16">
         <UploadCard
           title="Passport or National ID"
-          required
+          required={docsRequired}
           body="A clear, high-resolution scan of your valid passport (photo page) or both sides of your ID card."
           file={passport}
           onPick={async (f) => { const p = await uploadOne("passport", f); if (p) setPassport(p); }}
@@ -72,7 +76,7 @@ export function DocumentUploader({
         />
         <UploadCard
           title="Proof of Address"
-          required
+          required={docsRequired}
           body="A utility bill (electricity, water, gas) or bank statement, less than 3 months old, showing your current address."
           file={proof}
           onPick={async (f) => { const p = await uploadOne("proof_of_address", f); if (p) setProof(p); }}
@@ -119,7 +123,8 @@ function UploadCard({
   return (
     <div className="surface rounded-card p-8">
       <h3 className="text-lg font-semibold mb-1.5">
-        {title} {required && <span className="text-meta font-normal text-muted">(required)</span>}
+        {title}{" "}
+        <span className="text-meta font-normal text-muted">({required ? "required" : "optional"})</span>
       </h3>
       <p className="text-meta text-muted mb-6">{body}</p>
 
@@ -149,7 +154,7 @@ function UploadCard({
             PDF, JPG, or PNG (max 10MB)
           </div>
           <input id={inputId} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                 onChange={async (e) => { const f = e.target.files?.[0]; if (f) await onPick(f); e.currentTarget.value = ""; }} />
+                 onChange={async (e) => { const input = e.currentTarget; const f = input.files?.[0]; if (f) await onPick(f); input.value = ""; }} />
         </label>
       ) : (
         <div className="flex items-center justify-between gap-3 rounded-elem p-3.5"
@@ -203,7 +208,7 @@ function ExtrasCard({
         <span className="text-fg font-semibold">Add another file</span> · PDF, JPG, or PNG (max 10MB)
         <input id="upload-extra" type="file" className="hidden"
                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-               onChange={async (e) => { const f = e.target.files?.[0]; if (f) await onAdd(f); e.currentTarget.value = ""; }} />
+               onChange={async (e) => { const input = e.currentTarget; const f = input.files?.[0]; if (f) await onAdd(f); input.value = ""; }} />
       </label>
     </div>
   );

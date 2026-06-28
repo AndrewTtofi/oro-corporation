@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
 import { getBranding } from "@/lib/services/branding";
+import { BrandMark } from "@/components/BrandMark";
 
 const I = {
   users: <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
@@ -17,17 +18,17 @@ export async function PartnerShell({
   children: React.ReactNode;
   active: "clients" | "settings";
 }) {
-  const { brandName, brandMark } = await getBranding();
+  const { brandName, brandMark, logo } = await getBranding();
   return (
     <div className="shell shell-admin">
       <aside className="sidebar">
-        <div className="sb-org">
-          <span className="mk">{brandMark}</span>
+        <Link href="/partner" className="sb-org">
+          <BrandMark logo={logo} mark={brandMark} />
           <div>
             <div className="nm">{brandName}</div>
             <div className="rl">Partner · scoped access</div>
           </div>
-        </div>
+        </Link>
         <nav className="sb-nav">
           <div className="sb-group">Scoped access</div>
           <Link href="/partner" className={`sb-item${active === "clients" ? " active" : ""}`}>{I.users}<span>My assigned clients</span></Link>

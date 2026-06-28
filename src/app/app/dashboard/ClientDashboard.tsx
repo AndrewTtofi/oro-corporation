@@ -11,7 +11,13 @@ const fmtShort = (d: Date) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 const titleize = (s: string) => s.split(/[._]/).map((w) => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
+type SectionVisibility = Partial<Record<
+  "kpis" | "documentRequests" | "keyDates" | "consultation" | "selectedServices" | "recentActivity",
+  boolean
+>>;
+
 export function ClientDashboard({
+  sections,
   name,
   brandName,
   since,
@@ -24,6 +30,7 @@ export function ClientDashboard({
   recentActivity,
   hasUpcomingBookingWithin14Days,
 }: {
+  sections: SectionVisibility;
   name: string;
   brandName: string;
   since: Date;
@@ -36,6 +43,8 @@ export function ClientDashboard({
   recentActivity: Activity[];
   hasUpcomingBookingWithin14Days: boolean;
 }) {
+  // A section renders only when staff have left it enabled for this plan.
+  const show = (k: keyof SectionVisibility) => sections[k] !== false;
   const first = name.split(" ")[0] ?? "there";
   const activeServices = services.filter((s) => s.status !== "completed").length;
 
@@ -58,19 +67,21 @@ export function ClientDashboard({
       </div>
 
       {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        {kpis.map((k) => (
-          <div key={k.t} className="kpi">
-            <div className="text-muted" style={{ fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.t}</div>
-            <div className="kpi-value">{k.v}</div>
-          </div>
-        ))}
-      </div>
+      {show("kpis") && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          {kpis.map((k) => (
+            <div key={k.t} className="kpi">
+              <div className="text-muted" style={{ fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.t}</div>
+              <div className="kpi-value">{k.v}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="twocol">
         {/* Left column */}
         <div className="flex flex-col gap-6">
-          {openRequests.length > 0 && (
+          {show("documentRequests") && openRequests.length > 0 && (
             <div className="card">
               <div className="card-head">
                 <h3>{brandName} has requested</h3>
@@ -87,6 +98,7 @@ export function ClientDashboard({
             </div>
           )}
 
+          {show("keyDates") && (
           <div className="card">
             <div className="card-title">Upcoming key dates</div>
             {upcomingKeyDates.length === 0 ? (
@@ -104,8 +116,9 @@ export function ClientDashboard({
               </ul>
             )}
           </div>
+          )}
 
-          {recentActivity.length > 0 && (
+          {show("recentActivity") && recentActivity.length > 0 && (
             <div className="card">
               <div className="card-title">Recent activity</div>
               <ul className="flex flex-col">
@@ -122,6 +135,7 @@ export function ClientDashboard({
 
         {/* Right column */}
         <div className="flex flex-col gap-6">
+          {show("consultation") && (
           <div className="card">
             <div className="card-title">Consultation</div>
             {hasUpcomingBookingWithin14Days ? (
@@ -136,7 +150,9 @@ export function ClientDashboard({
               </>
             )}
           </div>
+          )}
 
+          {show("selectedServices") && (
           <div className="card">
             <div className="card-title">Selected services</div>
             {services.length === 0 ? (
@@ -151,6 +167,7 @@ export function ClientDashboard({
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </>

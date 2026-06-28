@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { personalAndIntentSchema, refineForSubmit } from "@/lib/schema/onboarding";
 
 type Section = "personal" | "intent" | "specifics";
 
@@ -11,20 +12,44 @@ const COUNTRIES = [
   "Netherlands", "Switzerland", "China", "India", "Other",
 ];
 
+// Which step a given field lives on, so a validation error can jump the user
+// straight to the section that needs fixing.
+const PERSONAL_FIELDS = ["fullLegalName", "dateOfBirth", "nationality", "residenceCountry", "address"];
+const INTENT_FIELDS = ["businessDescription", "expectedTurnover", "timeline", "source"];
+function sectionForField(field: string): Section {
+  if (PERSONAL_FIELDS.includes(field)) return "personal";
+  if (INTENT_FIELDS.includes(field)) return "intent";
+  return "specifics";
+}
+
+const personalSchema = personalAndIntentSchema.pick({
+  fullLegalName: true, dateOfBirth: true, nationality: true, residenceCountry: true, address: true,
+});
+const intentSchema = personalAndIntentSchema.pick({
+  businessDescription: true, expectedTurnover: true, timeline: true, source: true,
+});
+
+// Per-field error messages, read by every <Field>/<Toggle> via context so the
+// offending input can highlight itself without threading props through.
+const FieldErrorContext = createContext<Record<string, string>>({});
+
 export function DetailsForm({
   services,
   initialDraft,
   reference,
   userFullName,
+  documentsPhase,
 }: {
   services: string[];
   initialDraft: Record<string, unknown>;
   reference: string;
   userFullName: string;
+  documentsPhase: "mandatory" | "optional" | "off";
 }) {
   const [section, setSection] = useState<Section>("personal");
   const [draft, setDraft] = useState<Record<string, unknown>>({ fullLegalName: userFullName, ...initialDraft });
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -45,6 +70,48 @@ export function DetailsForm({
 
   function set<K extends string>(field: K, value: unknown) {
     setDraft((d) => ({ ...d, [field]: value }));
+    // Clear this field's error the moment the user edits it.
+    setFieldErrors((fe) => {
+      if (!fe[field]) return fe;
+      const next = { ...fe };
+      delete next[field];
+      return next;
+    });
+  }
+
+  // Friendly copy: an empty required field reads "This field is required";
+  // a filled-but-invalid one keeps the schema's specific message.
+  function friendly(field: string, schemaMsg: string): string {
+    const v = draft[field];
+    const empty = v === undefined || v === null || v === "";
+    return empty ? "This field is required." : schemaMsg;
+  }
+
+  // Validate `draft` against a schema subset → { field: message }.
+  function collectErrors(schema: typeof personalSchema | typeof intentSchema): Record<string, string> {
+    const res = schema.safeParse(draft);
+    const errs: Record<string, string> = {};
+    if (!res.success) {
+      for (const issue of res.error.issues) {
+        const f = String(issue.path[0]);
+        if (f && !errs[f]) errs[f] = friendly(f, issue.message);
+      }
+    }
+    return errs;
+  }
+
+  // Highlight the bad fields, jump to the first offending section, and scroll
+  // the first highlighted input into view.
+  function showErrors(errs: Record<string, string>) {
+    setFieldErrors(errs);
+    setError("Please complete the highlighted fields.");
+    const first = Object.keys(errs)[0];
+    if (first) {
+      setSection(sectionForField(first));
+      setTimeout(() => {
+        document.querySelector(".field-invalid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 60);
+    }
   }
   function g<K extends string>(field: K): string {
     const v = draft[field];
@@ -57,9 +124,24 @@ export function DetailsForm({
 
   async function onContinue() {
     setError(null);
-    if (section === "personal") { setSection("intent"); window.scrollTo(0, 0); return; }
-    if (section === "intent") { setSection("specifics"); window.scrollTo(0, 0); return; }
-    // section === specifics → submit Step 2
+    setFieldErrors({});
+    if (section === "personal") {
+      const errs = collectErrors(personalSchema);
+      if (Object.keys(errs).length) { showErrors(errs); return; }
+      setSection("intent"); window.scrollTo(0, 0); return;
+    }
+    if (section === "intent") {
+      const errs = collectErrors(intentSchema);
+      if (Object.keys(errs).length) { showErrors(errs); return; }
+      setSection("specifics"); window.scrollTo(0, 0); return;
+    }
+    // section === specifics → validate conditional requireds client-side first
+    const refineErrs: Record<string, string> = {};
+    for (const e of refineForSubmit({ ...draft, services } as never)) {
+      if (!refineErrs[e.field]) refineErrs[e.field] = e.message;
+    }
+    if (Object.keys(refineErrs).length) { showErrors(refineErrs); return; }
+    // → submit Step 2
     start(async () => {
       const res = await fetch("/api/onboarding/submit", {
         method: "POST",
@@ -68,10 +150,28 @@ export function DetailsForm({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: unknown };
-        const msg = Array.isArray(body.error)
-          ? (body.error as { message?: string; field?: string }[]).map((e) => e.message ?? JSON.stringify(e)).join(" · ")
-          : typeof body.error === "string" ? body.error : "Please complete all required fields.";
-        setError(msg);
+        // Map any field-keyed server errors back onto the inputs.
+        const errs: Record<string, string> = {};
+        if (Array.isArray(body.error)) {
+          for (const e of body.error as { message?: string; field?: string; path?: (string | number)[] }[]) {
+            const f = e.field ?? (Array.isArray(e.path) ? String(e.path[0]) : undefined);
+            if (f && !errs[f]) errs[f] = friendly(f, e.message ?? "This field is required.");
+          }
+        }
+        if (Object.keys(errs).length) { showErrors(errs); return; }
+        setError(typeof body.error === "string" ? body.error : "Please complete all required fields.");
+        return;
+      }
+      // When the documents phase is disabled, step 2 is the final step:
+      // finalise the application here instead of continuing to documents.
+      if (documentsPhase === "off") {
+        const fin = await fetch("/api/onboarding/submit", { method: "PUT" });
+        if (!fin.ok) {
+          const body = (await fin.json().catch(() => ({}))) as { error?: string };
+          setError(body.error ?? "Submission failed");
+          return;
+        }
+        router.push("/onboarding/success");
         return;
       }
       router.push("/onboarding/documents");
@@ -90,6 +190,7 @@ export function DetailsForm({
   }
 
   return (
+    <FieldErrorContext.Provider value={fieldErrors}>
     <div className="container max-w-[1200px] grid gap-16 lg:grid-cols-[240px_1fr] pb-24">
       <aside className="lg:sticky lg:top-32 self-start">
         <nav className="flex lg:flex-col gap-4 lg:gap-5">
@@ -105,29 +206,29 @@ export function DetailsForm({
       <main className="surface rounded-card p-10 lg:p-12">
         {section === "personal" && (
           <section>
-            <h2 className="font-display text-3xl mb-8">Personal Information</h2>
+            <h2 className="font-display text-2xl mb-8">Personal Information</h2>
             <div className="flex flex-col gap-8">
-              <Field label="Full legal name (as shown on passport)">
+              <Field label="Full legal name (as shown on passport)" name="fullLegalName">
                 <input className="input" value={g("fullLegalName")} onChange={(e) => set("fullLegalName", e.target.value)} />
               </Field>
               <div className="grid gap-6 sm:grid-cols-2">
-                <Field label="Date of birth">
+                <Field label="Date of birth" name="dateOfBirth">
                   <input type="date" className="input" value={g("dateOfBirth").slice(0, 10)} onChange={(e) => set("dateOfBirth", e.target.value)} />
                 </Field>
-                <Field label="Nationality">
+                <Field label="Nationality" name="nationality">
                   <select className="select" value={g("nationality")} onChange={(e) => set("nationality", e.target.value)}>
                     <option value="">Select…</option>
                     {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </Field>
               </div>
-              <Field label="Country of current residence">
+              <Field label="Country of current residence" name="residenceCountry">
                 <select className="select" value={g("residenceCountry")} onChange={(e) => set("residenceCountry", e.target.value)}>
                   <option value="">Select…</option>
                   {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
-              <Field label="Current address">
+              <Field label="Current address" name="address">
                 <textarea className="textarea" placeholder="Street, Building, Apartment, City, Postal Code"
                           value={g("address")} onChange={(e) => set("address", e.target.value)} />
               </Field>
@@ -137,16 +238,16 @@ export function DetailsForm({
 
         {section === "intent" && (
           <section>
-            <h2 className="font-display text-3xl mb-8">Business Intent</h2>
+            <h2 className="font-display text-2xl mb-8">Business Intent</h2>
             <div className="flex flex-col gap-8">
-              <Field label="Brief description of your business activity"
+              <Field label="Brief description of your business activity" name="businessDescription"
                      hint="Minimum 100 characters. Describe what your company does or will do.">
                 <textarea className="textarea" rows={5} value={g("businessDescription")}
                           onChange={(e) => set("businessDescription", e.target.value)} />
                 <div className="text-meta text-muted text-right">{g("businessDescription").length} / 100</div>
               </Field>
               <div className="grid gap-6 sm:grid-cols-2">
-                <Field label="Expected annual turnover">
+                <Field label="Expected annual turnover" name="expectedTurnover">
                   <select className="select" value={g("expectedTurnover")} onChange={(e) => set("expectedTurnover", e.target.value)}>
                     <option value="">Select…</option>
                     <option value="<50K">Under EUR 50K</option>
@@ -156,7 +257,7 @@ export function DetailsForm({
                     <option value="1M+">EUR 1M+</option>
                   </select>
                 </Field>
-                <Field label="Timeline to get started">
+                <Field label="Timeline to get started" name="timeline">
                   <select className="select" value={g("timeline")} onChange={(e) => set("timeline", e.target.value)}>
                     <option value="">Select…</option>
                     <option value="immediately">Immediately</option>
@@ -166,7 +267,7 @@ export function DetailsForm({
                   </select>
                 </Field>
               </div>
-              <Field label="How did you hear about us?">
+              <Field label="How did you hear about us?" name="source">
                 <select className="select" value={g("source")} onChange={(e) => set("source", e.target.value)}>
                   <option value="">Select…</option>
                   <option value="google">Google Search</option>
@@ -182,19 +283,19 @@ export function DetailsForm({
 
         {section === "specifics" && (
           <section>
-            <h2 className="font-display text-3xl mb-2">Service Specifics</h2>
+            <h2 className="font-display text-2xl mb-2">Service Specifics</h2>
             <p className="text-muted mb-8">
               Based on your selection: {services.length ? services.map(formatService).join(" · ") : "—"}
             </p>
             <div className="flex flex-col gap-8">
               {services.includes("company_formation") && (
                 <FieldGroup title="Company Formation">
-                  <Field label="Proposed company name">
+                  <Field label="Proposed company name" name="proposedCompanyName">
                     <input className="input" placeholder="Desired name (subject to availability)"
                            value={g("proposedCompanyName")} onChange={(e) => set("proposedCompanyName", e.target.value)} />
                   </Field>
                   <div className="grid gap-6 sm:grid-cols-2">
-                    <Field label="Number of shareholders">
+                    <Field label="Number of shareholders" name="shareholderCount">
                       <input type="number" min={1} className="input" value={g("shareholderCount")}
                              onChange={(e) => set("shareholderCount", Number(e.target.value))} />
                     </Field>
@@ -210,13 +311,13 @@ export function DetailsForm({
 
               {services.includes("tax_residency") && (
                 <FieldGroup title="Tax Residency">
-                  <Field label="Current tax residency country">
+                  <Field label="Current tax residency country" name="currentTaxResidency">
                     <select className="select" value={g("currentTaxResidency")} onChange={(e) => set("currentTaxResidency", e.target.value)}>
                       <option value="">Select…</option>
                       {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
                     </select>
                   </Field>
-                  <Toggle label="60+ days in Cyprus this year?" value={bool("daysInCyprus60Plus")}
+                  <Toggle label="60+ days in Cyprus this year?" name="daysInCyprus60Plus" value={bool("daysInCyprus60Plus")}
                           onChange={(v) => set("daysInCyprus60Plus", v)} />
                   <Field label="Employment status">
                     <input className="input" value={g("employmentStatus")} onChange={(e) => set("employmentStatus", e.target.value)} />
@@ -226,7 +327,7 @@ export function DetailsForm({
 
               {services.includes("immigration") && (
                 <FieldGroup title="Immigration">
-                  <Field label="Permit type">
+                  <Field label="Permit type" name="permitType">
                     <select className="select" value={g("permitType")} onChange={(e) => set("permitType", e.target.value)}>
                       <option value="">Select…</option>
                       <option value="work">Work permit</option>
@@ -234,7 +335,7 @@ export function DetailsForm({
                       <option value="digital_nomad">Digital Nomad visa</option>
                     </select>
                   </Field>
-                  <Field label="Family members count (excluding you)">
+                  <Field label="Family members count (excluding you)" name="familyCount">
                     <input type="number" min={0} className="input" value={g("familyCount")}
                            onChange={(e) => set("familyCount", Number(e.target.value))} />
                   </Field>
@@ -243,7 +344,7 @@ export function DetailsForm({
 
               {services.includes("accounting") && (
                 <FieldGroup title="Accounting & VAT">
-                  <Toggle label="Existing Cyprus company?" value={bool("hasCyprusCompany")}
+                  <Toggle label="Existing Cyprus company?" name="hasCyprusCompany" value={bool("hasCyprusCompany")}
                           onChange={(v) => set("hasCyprusCompany", v)} />
                   {bool("hasCyprusCompany") && (
                     <Field label="Registration number">
@@ -264,7 +365,7 @@ export function DetailsForm({
 
               {services.includes("banking") && (
                 <FieldGroup title="Banking Solutions">
-                  <Field label="Account purpose">
+                  <Field label="Account purpose" name="accountPurpose">
                     <input className="input" value={g("accountPurpose")} onChange={(e) => set("accountPurpose", e.target.value)} />
                   </Field>
                   <Field label="Expected monthly volume (EUR)">
@@ -280,7 +381,7 @@ export function DetailsForm({
 
               {services.includes("licensing") && (
                 <FieldGroup title="Licensing">
-                  <Field label="License type (CySEC / CASP / EMI / Gambling / Other)">
+                  <Field label="License type (CySEC / CASP / EMI / Gambling / Other)" name="licenseType">
                     <input className="input" value={g("licenseType")} onChange={(e) => set("licenseType", e.target.value)} />
                   </Field>
                   <Field label="Current jurisdiction (if any)">
@@ -310,12 +411,19 @@ export function DetailsForm({
           <div className="flex gap-3">
             <button type="button" onClick={onBack} className="btn btn-ghost px-6 py-3">Back</button>
             <button type="button" onClick={onContinue} disabled={pending} className="btn btn-primary px-7 py-3 disabled:opacity-50">
-              {section === "specifics" ? (pending ? "Submitting…" : "Continue to documents") : "Continue"}
+              {section === "specifics"
+                ? pending
+                  ? "Submitting…"
+                  : documentsPhase === "off"
+                    ? "Submit application"
+                    : "Continue to documents"
+                : "Continue"}
             </button>
           </div>
         </div>
       </main>
     </div>
+    </FieldErrorContext.Provider>
   );
 }
 
@@ -341,12 +449,15 @@ function SideLink({ label, active, done, onClick }: { label: string; active: boo
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({ label, hint, name, children }: { label: string; hint?: string; name?: string; children: React.ReactNode }) {
+  const errors = useContext(FieldErrorContext);
+  const err = name ? errors[name] : undefined;
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className={`flex flex-col gap-2.5${err ? " field-invalid" : ""}`}>
       <label className="text-meta font-semibold">{label}</label>
       {hint && <p className="text-[12px] text-muted -mt-1">{hint}</p>}
       {children}
+      {err && <p className="text-[12px]" style={{ color: "var(--danger)" }}>{err}</p>}
     </div>
   );
 }
@@ -360,7 +471,9 @@ function FieldGroup({ title, children }: { title: string; children: React.ReactN
   );
 }
 
-function Toggle({ label, value, onChange }: { label: string; value: boolean | undefined; onChange: (v: boolean) => void }) {
+function Toggle({ label, name, value, onChange }: { label: string; name?: string; value: boolean | undefined; onChange: (v: boolean) => void }) {
+  const errors = useContext(FieldErrorContext);
+  const err = name ? errors[name] : undefined;
   return (
     <div className="flex flex-col gap-2.5">
       <label className="text-meta font-semibold">{label}</label>
@@ -376,6 +489,7 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean | un
                   ? { borderColor: "var(--accent)", background: "var(--accent-soft)", color: "var(--fg)" }
                   : { borderColor: "var(--border)" }}>Yes</button>
       </div>
+      {err && <p className="text-[12px]" style={{ color: "var(--danger)" }}>{err}</p>}
     </div>
   );
 }

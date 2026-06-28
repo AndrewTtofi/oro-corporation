@@ -35,6 +35,10 @@ export async function runSeed() {
     update: {},
     create: { userId: pendingUser.id, referenceNumber: "ORO-2026-00142", status: ProspectStatus.pending, servicesSelected: ["company_formation"] },
   });
+  // Idempotent: these tables have no natural unique key, so `skipDuplicates`
+  // can't prevent re-seeding from piling up duplicates on every boot. Clear the
+  // seeded entity's rows first, then re-create.
+  await prisma.prospectDetail.deleteMany({ where: { prospectId: pendingProspect.id } });
   await prisma.prospectDetail.createMany({
     skipDuplicates: true,
     data: [
@@ -45,6 +49,7 @@ export async function runSeed() {
       { prospectId: pendingProspect.id, fieldName: "business_description", fieldValue: "Software development agency focusing on fintech solutions for the EU market. Planning to hire 3 developers in Cyprus within the first year." },
     ],
   });
+  await prisma.document.deleteMany({ where: { prospectId: pendingProspect.id } });
   await prisma.document.createMany({
     skipDuplicates: true,
     data: [
@@ -93,6 +98,7 @@ export async function runSeed() {
     update: {},
     create: { userId: clientUser.id, prospectId: clientProspect.id, companyName: "Meridian Trading Ltd", status: ClientStatus.active, primaryStaffId: staff.id, createdAt: new Date("2026-01-15") },
   });
+  await prisma.clientService.deleteMany({ where: { clientId: client.id } });
   await prisma.clientService.createMany({
     skipDuplicates: true,
     data: [
@@ -100,6 +106,7 @@ export async function runSeed() {
       { clientId: client.id, serviceType: "banking", status: SvcStatus.pending, assignedPartnerId: partner.id, startDate: new Date("2026-01-20"), notes: "Bank of Cyprus application submitted. Awaiting KYC approval." },
     ],
   });
+  await prisma.keyDate.deleteMany({ where: { clientId: client.id } });
   await prisma.keyDate.createMany({
     skipDuplicates: true,
     data: [
@@ -108,6 +115,7 @@ export async function runSeed() {
       { clientId: client.id, description: "Passport Renewal Reminder", dueDate: new Date("2026-05-20"), status: KeyDateStatus.overdue },
     ],
   });
+  await prisma.internalNote.deleteMany({ where: { clientId: client.id } });
   await prisma.internalNote.createMany({
     skipDuplicates: true,
     data: [

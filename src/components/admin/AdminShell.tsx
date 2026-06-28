@@ -3,12 +3,13 @@ import { signOut } from "@/lib/auth";
 import { getBranding, tierAtLeast } from "@/lib/services/branding";
 import { currentIsSuperAdmin } from "@/lib/auth/guards";
 import { Icon } from "@/components/Icon";
+import { BrandMark } from "@/components/BrandMark";
 
 type AdminTab =
   | "dashboard" | "submissions" | "compliance-hub"
   | "kyc" | "aml" | "kyb" | "ai-screening" | "ownership-map" | "client-risk" | "aml-reporting" | "compliance-calendar"
   | "leads" | "clients" | "messages"
-  | "documents" | "bookings" | "users" | "analytics" | "content"
+  | "documents" | "bookings" | "client-dashboard" | "branding" | "users" | "analytics" | "content"
   | "integrations" | "settings";
 
 const I = {
@@ -25,6 +26,7 @@ const I = {
   logout: <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>,
   search: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
   bell: <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
+  image: <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L3 21" /></svg>,
 };
 
 const TITLES: Record<AdminTab, string> = {
@@ -32,7 +34,7 @@ const TITLES: Record<AdminTab, string> = {
   kyc: "KYC / ID verification", aml: "AML screening", kyb: "KYB verification", "ai-screening": "AI screening",
   "ownership-map": "Ownership map", "client-risk": "Client risk", "aml-reporting": "AML reporting", "compliance-calendar": "Compliance calendar",
   leads: "Leads / CRM", clients: "Clients", messages: "Messages",
-  documents: "Documents & e-sign", bookings: "Bookings", users: "Users", analytics: "Analytics", content: "Content",
+  documents: "Documents & e-sign", bookings: "Bookings", "client-dashboard": "Client dashboard", branding: "Branding", users: "Users", analytics: "Analytics", content: "Content",
   integrations: "Connect & API", settings: "Settings",
 };
 
@@ -49,7 +51,7 @@ export async function AdminShell({
   topRight?: React.ReactNode;
   title?: string;
 }) {
-  const { brandName, brandMark, planTier } = await getBranding();
+  const { brandName, brandMark, planTier, logo } = await getBranding();
   const superAdmin = await currentIsSuperAdmin();
   const Item = ({ id, href, icon, label }: { id: AdminTab; href: string; icon: React.ReactNode; label: string }) => (
     <Link href={href} className={`sb-item${active === id ? " active" : ""}`}>{icon}<span>{label}</span></Link>
@@ -58,13 +60,13 @@ export async function AdminShell({
   return (
     <div className="shell shell-admin">
       <aside className="sidebar">
-        <div className="sb-org">
-          <span className="mk">{brandMark}</span>
+        <Link href={superAdmin ? "/admin/settings" : "/admin"} className="sb-org">
+          <BrandMark logo={logo} mark={brandMark} />
           <div>
             <div className="nm">{brandName}</div>
             <div className="rl">{superAdmin ? "Platform admin" : "Firm admin"}</div>
           </div>
-        </div>
+        </Link>
         <nav className="sb-nav">
           {superAdmin ? (
             <>
@@ -103,7 +105,9 @@ export async function AdminShell({
                 <Item id="documents" href="/admin/documents" icon={<Icon name="pen" />} label="Documents & e-sign" />
               )}
               <Item id="bookings" href="/admin/bookings" icon={I.bookings} label="Bookings" />
+              <Item id="client-dashboard" href="/admin/client-dashboard" icon={I.dashboard} label="Client dashboard" />
               <div className="sb-group">Firm</div>
+              <Item id="branding" href="/admin/branding" icon={I.image} label="Branding" />
               <Item id="users" href="/admin/users" icon={I.users} label="Users" />
               <Item id="analytics" href="/admin/analytics" icon={I.analytics} label="Analytics" />
               <Item id="content" href="/admin/content" icon={I.content} label="Content" />

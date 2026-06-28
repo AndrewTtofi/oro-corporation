@@ -30,7 +30,10 @@ export default async function MyDocumentsPage() {
     if (key === BUCKET_CORRESPONDENCE) return "Correspondence";
     return taxonomy.find((t) => t.key === key)?.label ?? key;
   };
-  const folderKeys = [BUCKET_KYC, ...(client?.services.map((s) => s.serviceType) ?? []), BUCKET_CORRESPONDENCE];
+  // De-dupe service types so a client with repeated service rows doesn't yield
+  // duplicate folder blocks / React keys.
+  const serviceTypes = Array.from(new Set(client?.services.map((s) => s.serviceType) ?? []));
+  const folderKeys = [BUCKET_KYC, ...serviceTypes, BUCKET_CORRESPONDENCE];
 
   const byFolder = new Map<string, ClientDocRow[]>();
   for (const d of prospect.documents) {
@@ -47,8 +50,8 @@ export default async function MyDocumentsPage() {
   }));
 
   const arbitraryFolders = [
-    { key: null, label: "General correspondence" },
-    ...(client?.services.map((s) => ({ key: s.serviceType, label: taxonomy.find((t) => t.key === s.serviceType)?.label ?? s.serviceType })) ?? []),
+    { key: null as string | null, label: "General correspondence" },
+    ...serviceTypes.map((st) => ({ key: st, label: taxonomy.find((t) => t.key === st)?.label ?? st })),
   ];
 
   return (

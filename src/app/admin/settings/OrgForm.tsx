@@ -3,7 +3,16 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-export function OrgForm({ initial }: { initial: { displayName: string; contactEmail: string | null; address: string | null } }) {
+export function OrgForm({
+  initial,
+}: {
+  initial: {
+    displayName: string;
+    contactEmail: string | null;
+    address: string | null;
+    documentsPhase: "mandatory" | "optional" | "off";
+  };
+}) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const router = useRouter();
@@ -20,6 +29,7 @@ export function OrgForm({ initial }: { initial: { displayName: string; contactEm
           displayName: fd.get("displayName"),
           contactEmail: fd.get("contactEmail"),
           address: fd.get("address"),
+          documentsPhase: fd.get("documentsPhase"),
         }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -38,6 +48,14 @@ export function OrgForm({ initial }: { initial: { displayName: string; contactEm
       </Field>
       <Field label="Address">
         <textarea name="address" rows={3} defaultValue={initial.address ?? ""} className="input" placeholder="Street, City, Country" />
+      </Field>
+      <Field label="Onboarding documents step">
+        <select name="documentsPhase" defaultValue={initial.documentsPhase} className="select">
+          <option value="mandatory">Mandatory — passport &amp; proof of address required to submit</option>
+          <option value="optional">Optional — step shown, applicants can submit without documents</option>
+          <option value="off">Off — remove the documents step (2-step onboarding)</option>
+        </select>
+        <p className="text-meta text-admin-muted">Controls the third onboarding phase where clients upload identity documents.</p>
       </Field>
       <div className="flex items-center gap-3">
         <button type="submit" disabled={pending} className="btn btn-primary px-5 py-2.5 disabled:opacity-50">

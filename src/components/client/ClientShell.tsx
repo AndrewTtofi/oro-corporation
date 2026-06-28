@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth";
 import { getBranding } from "@/lib/services/branding";
+import { BrandMark } from "@/components/BrandMark";
 
 type ActiveKey = "dashboard" | "application" | "messages" | "documents" | "booking" | "marketplace" | "applications" | "settings";
 
@@ -40,7 +41,7 @@ export async function ClientShell({
   approved: boolean;
   title?: string;
 }) {
-  const { brandName, brandMark } = await getBranding();
+  const { brandName, brandMark, logo } = await getBranding();
   const Item = ({ id, icon, label, locked }: { id: ActiveKey; icon: React.ReactNode; label: string; locked?: boolean }) => {
     const cls = `sb-item${active === id ? " active" : ""}${locked ? " locked" : ""}`;
     const inner = <>{icon}<span>{label}</span>{locked && <span className="lockic">{I.lock}</span>}</>;
@@ -50,13 +51,13 @@ export async function ClientShell({
   return (
     <div className="shell shell-client">
       <aside className="sidebar">
-        <div className="sb-org">
-          <span className="mk">{brandMark}</span>
+        <Link href="/app/dashboard" className="sb-org">
+          <BrandMark logo={logo} mark={brandMark} />
           <div>
             <div className="nm">{brandName}</div>
             <div className="rl">Client portal</div>
           </div>
-        </div>
+        </Link>
         <nav className="sb-nav">
           <div className="sb-group">Overview</div>
           <Item id="dashboard" icon={I.dashboard} label="Dashboard" />

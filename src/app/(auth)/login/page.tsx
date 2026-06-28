@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { AuthTabs } from "./AuthTabs";
 import { getBranding } from "@/lib/services/branding";
+import { BrandMark } from "@/components/BrandMark";
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const { brandName, brandMark } = await getBranding();
+  const { brandName, brandMark, logo } = await getBranding();
   return (
     <main className="shell-marketing auth-wrap">
       <div className="w-full max-w-[440px]">
         <Link href="/" className="wordmark justify-center mb-8" style={{ justifyContent: "center" }}>
           <span className="seal" />
-          <span className="mk">{brandMark}</span>
+          <BrandMark logo={logo} mark={brandMark} />
           <span>{brandName}</span>
         </Link>
 

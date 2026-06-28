@@ -5,6 +5,7 @@ import { createComplianceFileForProspect } from "@/lib/services/compliance/files
 import { ProspectStatus, type Prisma } from "@prisma/client";
 import { submitSchema, type SubmitInput, type FullDraft, refineForSubmit, SERVICE_KEYS } from "@/lib/schema/onboarding";
 import { computeCompleteness } from "@/lib/services/prospect-intel";
+import { getDocumentsPhase } from "@/lib/services/settings";
 
 /** Returns the user's existing prospect or creates a new draft one. */
 export async function ensureProspect(userId: string) {
@@ -102,10 +103,16 @@ export async function submitProspect(userId: string) {
   const prospect = await prisma.prospect.findUnique({ where: { userId } });
   if (!prospect) return { ok: false as const, reason: "NO_PROSPECT" as const };
   const docs = await prisma.document.findMany({ where: { prospectId: prospect.id } });
-  const hasPassport = docs.some((d) => d.type === "passport");
-  const hasAddress = docs.some((d) => d.type === "proof_of_address");
-  if (!hasPassport || !hasAddress) {
-    return { ok: false as const, reason: "MISSING_DOCS" as const };
+
+  // Passport + proof of address are only enforced when the documents phase is
+  // mandatory. In "optional"/"off" modes the application can submit without them.
+  const documentsPhase = await getDocumentsPhase();
+  if (documentsPhase === "mandatory") {
+    const hasPassport = docs.some((d) => d.type === "passport");
+    const hasAddress = docs.some((d) => d.type === "proof_of_address");
+    if (!hasPassport || !hasAddress) {
+      return { ok: false as const, reason: "MISSING_DOCS" as const };
+    }
   }
 
   // Compute the brief-completeness score from the draft before it is cleared.

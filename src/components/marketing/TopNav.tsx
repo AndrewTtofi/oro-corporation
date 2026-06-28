@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { getBranding } from "@/lib/services/branding";
+import { BrandMark } from "@/components/BrandMark";
 
 export async function TopNav() {
-  const { brandName, brandMark } = await getBranding();
+  const { brandName, brandMark, logo } = await getBranding();
   return (
     <nav className="pubnav">
       <div className="pubnav-inner">
         <Link href="/" className="wordmark">
           <span className="seal" />
-          <span className="mk">{brandMark}</span>
+          <BrandMark logo={logo} mark={brandMark} />
           <span>{brandName}</span>
         </Link>
         <div className="pubnav-links">

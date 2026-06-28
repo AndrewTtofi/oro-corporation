@@ -11,9 +11,19 @@ const schema = z.object({
   displayName: z.string().min(1).max(150).optional(),
   contactEmail: z.string().email().or(z.literal("")).nullable().optional(),
   address: z.string().max(1000).nullable().optional(),
+  // Onboarding document-upload phase behaviour
+  documentsPhase: z.enum(["mandatory", "optional", "off"]).optional(),
   // White-label branding + plan tier
   brandName: z.string().max(150).nullable().optional(),
   brandMark: z.string().max(2).nullable().optional(),
+  // Logo as a data: URL (png/jpeg/svg/webp), capped ~1MB of base64. "" clears it.
+  logo: z
+    .string()
+    .regex(/^data:image\/(png|jpeg|jpg|webp|svg\+xml);/, "Must be a PNG, JPEG, WEBP or SVG image")
+    .max(1_400_000, "Image too large — keep it under ~1MB")
+    .or(z.literal(""))
+    .nullable()
+    .optional(),
   accentColor: hex.or(z.literal("")).nullable().optional(),
   themePreset: z.enum(["indigo", "emerald", "gold", "burgundy", "slate"]).optional(),
   planTier: z.enum(["starter", "professional", "scale"]).optional(),
@@ -37,8 +47,10 @@ export async function PATCH(req: Request) {
   if (p.displayName !== undefined) data.displayName = p.displayName;
   if (p.contactEmail !== undefined) data.contactEmail = p.contactEmail || null;
   if (p.address !== undefined) data.address = p.address || null;
+  if (p.documentsPhase !== undefined) data.documentsPhase = p.documentsPhase;
   if (p.brandName !== undefined) data.brandName = p.brandName || null;
   if (p.brandMark !== undefined) data.brandMark = p.brandMark ? p.brandMark.toUpperCase() : null;
+  if (p.logo !== undefined) data.logo = p.logo || null;
   if (p.accentColor !== undefined) data.accentColor = p.accentColor || null;
   if (p.themePreset !== undefined) data.themePreset = p.themePreset;
   if (p.planTier !== undefined) data.planTier = p.planTier;

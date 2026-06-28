@@ -102,6 +102,8 @@ export function tierAtLeast(current: string, required: PlanTier): boolean {
 export type Branding = {
   brandName: string;
   brandMark: string;
+  /** Uploaded logo as a data: URL, or null to fall back to the letter mark. */
+  logo: string | null;
   accentColor: string | null;
   themePreset: string;
   planTier: PlanTier;
@@ -118,6 +120,7 @@ export const getBranding = cache(async (): Promise<Branding> => {
   return {
     brandName,
     brandMark,
+    logo: typeof org.logo === "string" && org.logo.startsWith("data:image/") ? org.logo : null,
     accentColor: isHex(org.accentColor) ? org.accentColor : null,
     themePreset: THEME_KEYS.includes(org.themePreset as ThemePreset) ? org.themePreset : "indigo",
     planTier,
