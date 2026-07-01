@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = submitSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors }, { status: 422 });
+    return NextResponse.json({ error: parsed.error.issues }, { status: 422 });
   }
   const out = await commitFormAnswers(user.id, parsed.data);
   if (!out.ok) return NextResponse.json({ error: out.errors }, { status: 422 });
