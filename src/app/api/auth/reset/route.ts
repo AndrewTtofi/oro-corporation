@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   const parsed = resetSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors.map((e) => e.message).join(", ") }, { status: 422 });
+    return NextResponse.json({ error: parsed.error.issues.map((e) => e.message).join(", ") }, { status: 422 });
   }
   const result = await completePasswordReset(parsed.data);
   if (!result.ok) {

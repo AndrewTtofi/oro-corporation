@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = fullDraftSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.errors }, { status: 422 });
+    return NextResponse.json({ error: parsed.error.issues }, { status: 422 });
   }
   await saveDraft(user.id, parsed.data);
   return NextResponse.json({ ok: true });
