@@ -12,6 +12,36 @@ auto-generated; sections at and below it are the curated history.
 
 ---
 
+## [1.1.0](https://github.com/AndrewTtofi/fiduciary-software/compare/v1.0.0...v1.1.0) (2026-07-01)
+
+
+### ✨ Features
+
+* **admin:** client-dashboard controls, logo upload, onboarding & link fixes ([#40](https://github.com/AndrewTtofi/fiduciary-software/issues/40)) ([16b0461](https://github.com/AndrewTtofi/fiduciary-software/commit/16b046171408b1fa2fa9df259ae1e49fa2d5688d))
+* **branding:** white-label all user-facing ORO references ([#37](https://github.com/AndrewTtofi/fiduciary-software/issues/37)) ([1c7bfe4](https://github.com/AndrewTtofi/fiduciary-software/commit/1c7bfe4ff5cce0fc76ced4b1c47a8da3e64b967f))
+* **ui:** prompt-hero advisor, mobile-polish partner network + footer ([#39](https://github.com/AndrewTtofi/fiduciary-software/issues/39)) ([bfad216](https://github.com/AndrewTtofi/fiduciary-software/commit/bfad21663e50dc4044aac035f6022fb4b9396a75))
+
+
+### 🐛 Bug Fixes
+
+* **deploy:** prune dangling images before pull to avoid disk exhaustion ([#38](https://github.com/AndrewTtofi/fiduciary-software/issues/38)) ([f810259](https://github.com/AndrewTtofi/fiduciary-software/commit/f810259b2b314d73ae210fa08dbfa9700ea087f2))
+* **notify:** summarise deploys from commits, not the changelog ([87cff32](https://github.com/AndrewTtofi/fiduciary-software/commit/87cff328e9d56885449a85656523806d4f0373ae))
+* **notify:** summarise deploys from commits, not the changelog ([63cfc25](https://github.com/AndrewTtofi/fiduciary-software/commit/63cfc25032837703099a455e9401c21247595040))
+
+
+### 📦 Dependencies
+
+* **deps:** bump ical-generator from 7.2.0 to 11.0.0 ([#45](https://github.com/AndrewTtofi/fiduciary-software/issues/45)) ([0a779f0](https://github.com/AndrewTtofi/fiduciary-software/commit/0a779f02954ae3a98919f0e94f08ef4ce887211c))
+* **deps:** bump node-cron from 3.0.3 to 4.5.0 ([#49](https://github.com/AndrewTtofi/fiduciary-software/issues/49)) ([a120ac1](https://github.com/AndrewTtofi/fiduciary-software/commit/a120ac12571b8e79fbc1cdfe5e3c27306df8f7e3))
+* **deps:** bump nodemailer from 6.10.1 to 9.0.3 ([#46](https://github.com/AndrewTtofi/fiduciary-software/issues/46)) ([6707931](https://github.com/AndrewTtofi/fiduciary-software/commit/670793145fd06c28436aa8cc98f8b055b80c820f))
+* **deps:** bump the prod-minor-patch group with 2 updates ([#44](https://github.com/AndrewTtofi/fiduciary-software/issues/44)) ([cb1b002](https://github.com/AndrewTtofi/fiduciary-software/commit/cb1b002793795b7d183842b033202aa0680eae5f))
+* **deps:** bump zod from 3.25.76 to 4.4.3 ([#48](https://github.com/AndrewTtofi/fiduciary-software/issues/48)) ([634a8d8](https://github.com/AndrewTtofi/fiduciary-software/commit/634a8d857d3fd15f12d04f281eb5b9afe8618aae))
+
+
+### 🤖 CI/CD
+
+* bump googleapis/release-please-action in the actions group ([#41](https://github.com/AndrewTtofi/fiduciary-software/issues/41)) ([e0a6538](https://github.com/AndrewTtofi/fiduciary-software/commit/e0a6538cf227e18f8900419770bf748bb2c54cf2))
+
 ## [1.0.0] - 2026-06-22
 
 First production release — the platform on Node 26 / Next.js 16 / Prisma 7 /
