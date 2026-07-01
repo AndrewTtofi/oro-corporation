@@ -1,6 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Keep the existing JS design-system config (theme tokens, content globs)
+   authoritative — Tailwind v4 no longer auto-discovers tailwind.config.ts. */
+@config "../../tailwind.config.ts";
+
+/* v4 defaults bare `border`/`divide` to currentColor; restore the v3 default
+   (gray-200) so the ~160 unqualified `border` utilities keep their hairline. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+}
 
 /* =====================================================================
    ORO — "Quiet Authority" design system (ported from the platform prototype)
